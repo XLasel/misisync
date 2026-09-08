@@ -5,7 +5,6 @@ import type { Schedule } from '~/types/schedule'
 export function useSchedule() {
   const api = createScheduleApi((path, options) => $fetch(path, options))
   const { data: catalogData, error: catalogError, refresh: refreshCatalog } = useAsyncData('groups', api.groups, { default: () => ({ revision: null, groups: [] }) })
-  const { data: sync, refresh: refreshStatus } = useAsyncData('sync-status', api.status)
   const catalog = computed(() => catalogData.value.groups)
   const group = ref('')
   const weekStart = ref(mondayOf(moscowToday()))
@@ -38,11 +37,8 @@ export function useSchedule() {
   }
   watch([group, weekStart], refreshSchedule)
   async function reload() {
-    await Promise.all([refreshStatus(), refreshCatalog()])
+    await refreshCatalog()
     await refreshSchedule()
   }
-  let timer: ReturnType<typeof setInterval> | undefined
-  onMounted(() => { timer = setInterval(reload, 60000) })
-  onUnmounted(() => { ++requestId; controller?.abort(); if (timer) clearInterval(timer) })
-  return { catalog, catalogError, sync, group, weekStart, weekEnd, weekDates, schedule, scheduleError, loading, reload }
+  return { catalog, catalogError, group, weekStart, weekEnd, weekDates, schedule, scheduleError, loading, reload }
 }

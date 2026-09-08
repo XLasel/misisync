@@ -4,12 +4,11 @@ import asyncio
 import json
 from datetime import date, timedelta
 from pathlib import Path
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl
 
 from app.config import Settings
 from app.domain import Window
 from app.ports import Document
-from app.repositories.sqlite import Database
 from app.sources.edu.source import EduApiSource
 
 
@@ -52,21 +51,15 @@ async def main():
     parser.add_argument('--group', action='append', required=True)
     parser.add_argument('--start', type=date.fromisoformat, required=True)
     parser.add_argument('--weeks', type=int, default=4)
-    parser.add_argument('--database', required=True, help='Separate preview SQLite file')
     args = parser.parse_args()
-    settings = Settings(schedule_source='edu_api', edu_groups=tuple(args.group),
-                        sync_weeks=args.weeks, edu_request_delay_seconds=0, database_path=args.database)
+    settings = Settings(edu_groups=tuple(args.group), edu_request_delay_seconds=0)
     if args.start.weekday() != 0:
         parser.error('--start must be a Monday')
     window = Window(start=args.start, end=args.start + timedelta(weeks=args.weeks) - timedelta(days=1))
     transport = HarTransport(args.har, settings.edu_api_url)
     snapshot = await EduApiSource(settings).fetch(transport, window)
-    snapshot = snapshot.model_copy(update={'warnings': snapshot.warnings + ['Проверочный импорт из сохранённой записи API. Автоматическое обновление отключено.']})
-    repository = Database(args.database)
-    repository.initialize()
-    repository.replace(snapshot, min(transport.captured_at))
     print(json.dumps({'groups': len(snapshot.groups), 'lessons': len(snapshot.lessons),
-                      'start': window.start.isoformat(), 'end': window.end.isoformat(), 'database': args.database}, ensure_ascii=False))
+                      'start': window.start.isoformat(), 'end': window.end.isoformat()}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

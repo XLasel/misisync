@@ -1,8 +1,8 @@
 # Misisync
 
-Неофициальное расписание МИСИС: тёмный адаптивный интерфейс, поиск группы, календарные недели, подгруппы, сведения об источнике и последнем успешном обновлении.
+Неофициальное расписание МИСИС: поиск группы, календарные недели, подгруппы.
 
-Python/FastAPI, SQLite через стандартный `sqlite3` без ORM, Vue 3/Nuxt, Docker Compose. Репозиторий: `/Users/xlasel/misisync`.
+Python/FastAPI + Vue 3/Nuxt + Docker Compose. Источник данных — live JSON-RPC `edu.misis.ru` (как официальный сайт): каталог групп кэшируется, расписание запрашивается по выбранной группе и неделям.
 
 ## Запуск
 
@@ -11,63 +11,29 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-Открыть http://localhost:3000. Для запуска нужен работающий Docker Engine. Именованный volume `schedule_data` сохраняет SQLite при перезапусках и пересборке контейнеров. Не используйте `docker compose down -v`, если нужно сохранить данные.
-
-По умолчанию выбран Excel. Загрузка начинается при старте и повторяется раз в четыре часа. До первого успешного импорта интерфейс показывает ожидание. Если обновление не удалось, остаётся предыдущий снимок.
-
-## Переключение источника
-
-В `.env`:
-
-```dotenv
-SCHEDULE_SOURCE=edu_api
-EDU_GROUPS=МПИ-26-1-1,МПИ-26-1-2
-```
-
-Применить:
-
-```sh
-docker compose up -d --build
-```
-
-Для возврата указать `SCHEDULE_SOURCE=excel`. Фронтенд, его адреса запросов и формат ответов остаются одинаковыми. Весь снимок переключается после успешной загрузки; автоматического смешивания источников нет. Пустой `EDU_GROUPS` означает весь каталог филиала. Полный каталог требует по одному последовательному запросу на группу и неделю, поэтому первая загрузка занимает существенно больше времени, чем для двух групп.
-
-API-адаптер реализован по записанным ответам и исходникам официального сайта, проверен на четырёх неделях МПИ-26-1-1. Прямые серверные запросы к edu.misis.ru в текущей среде не проверены из-за ранее полученного ограничения доступа браузера. Контракт, HTTP-транспорт и ошибки проверены локально; HAR воспроизводится без сетевого обхода этого ограничения. Сведения об исследовании: [docs/edu-api-investigation.md](docs/edu-api-investigation.md).
+Открыть http://localhost:3000. Нужен работающий Docker Engine.
 
 ## Настройки
 
 | Переменная | Назначение |
 | --- | --- |
-| `SCHEDULE_SOURCE` | `excel` или `edu_api` |
-| `DATABASE_PATH` | Файл SQLite; в Docker `/data/schedule.sqlite3` |
-| `UPDATE_INTERVAL_SECONDS` | Интервал обновления, по умолчанию 14400 |
-| `SYNC_WEEKS` | Текущая московская неделя и следующие, всего 1–12, по умолчанию 4 |
-| `REQUEST_TIMEOUT_SECONDS`, `MAX_DOWNLOAD_BYTES` | Таймаут и максимальный размер каждого ответа |
-| `ENABLE_SCHEDULER` | Автоматические загрузки `true` / `false` |
-| `EXCEL_SOURCE_URL` | Страница студентов, страница расписания или прямая ссылка XLS/XLSX |
-| `EXCEL_LINK_PATTERN` | Необязательный regex по ссылке/названию института |
-| `EXCEL_UPPER_ROW_WEEK` | `odd` или `even`, значение верхней строки двухстрочной сетки |
-| `EXCEL_TERM_START`, `EXCEL_TERM_END` | Начало первой учебной недели и конец семестра; поддерживайте даты актуальными |
 | `EDU_API_URL`, `EDU_FILIAL` | JSON-RPC endpoint и филиал (`MOSCOW`) |
-| `EDU_GROUPS` | Названия через запятую; пусто = все группы филиала |
-| `EDU_REQUEST_DELAY_SECONDS` | Пауза перед каждым RPC, по умолчанию 0.25 с |
-| `NUXT_API_BASE` | Адрес бэкенда для серверного прокси Nuxt |
-| `PORT` | Порт фронтенда, по умолчанию 3000 |
+| `EDU_GROUPS` | Фильтр имён в каталоге; пусто = все группы филиала |
+| `EDU_REQUEST_DELAY_SECONDS` | Пауза перед каждым RPC (по умолчанию 0.25) |
+| `EDU_CATALOG_TTL_SECONDS` | TTL кэша списка групп (3600) |
+| `EDU_SCHEDULE_TTL_SECONDS` | TTL кэша недели группы (900) |
+| `REQUEST_TIMEOUT_SECONDS`, `MAX_DOWNLOAD_BYTES` | Таймаут и лимит размера ответа |
+| `NUXT_API_BASE` | Адрес бэкенда для прокси Nuxt |
+| `PORT` | Порт фронтенда (3000) |
 
-Excel разворачивается в календарь по учебным неделям, а не по чётности ISO-недели. Даты по умолчанию — 01.09.2026–31.01.2027. Особые условия из свободного текста сохраняются и требуют проверки; интерфейс помечает такой источник как недельный шаблон. Подтверждённые запросы API включают понедельник–субботу; воскресенье показывается как день без загруженных данных. Неопределённое время и неоднозначные повторы отмечены явно.
+## API
 
-## API и архитектура
+- `GET /api/groups`
+- `GET /api/schedule?group_id=...&start=YYYY-MM-DD&end=YYYY-MM-DD`
+- `GET /api/status`
+- `GET /api/health`
 
-- `GET /api/groups`: каталог групп в объекте `{revision, groups}`.
-- `GET /api/schedule?group_id=МПИ-26-1-1&start=2026-09-07&end=2026-09-13`: календарь, покрытие, источник и занятия.
-- `GET /api/status`: фактический и настроенный источник, обновление, ошибки, покрытие.
-- `GET /api/health`: доступность SQLite.
-
-OpenAPI и интерактивная документация доступны непосредственно на бэкенде: `/openapi.json` и `/docs` (локально http://localhost:8000/docs). В Docker наружу по умолчанию опубликован только фронтенд.
-
-[Границы слоёв, контракты и замена адаптеров](docs/architecture.md). SQLite, HTTP и источники заменяются независимо через интерфейсы в `ports.py`. Excel-парсер находится только внутри `sources/excel` и не загружается при выборе API-адаптера.
-
-Старый `/api/catalog`, недельные DTO и миграции предыдущей схемы удалены. Это чистая смена контракта. Новая база называется `schedule.sqlite3`; для старого файла установите новый `DATABASE_PATH`. Старые локальные файлы автоматически не удаляются и не конвертируются.
+Контракт и замена бэкенда: [docs/architecture.md](docs/architecture.md). Исследование API: [docs/edu-api-investigation.md](docs/edu-api-investigation.md).
 
 ## Локальная разработка
 
@@ -77,36 +43,20 @@ python3 -m venv .venv
 PYTHONPATH=backend .venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-В другом терминале:
-
 ```sh
-cd frontend
-npm ci
-npm run dev -- --port 3000
+cd frontend && npm ci && npm run dev -- --port 3000
 ```
 
-При локальном запуске `.env` автоматически не читается: передайте нужные переменные окружения процессу. `DATABASE_PATH` по умолчанию локальный `data/schedule.sqlite3`. Для отдельного однократного импорта при отключённом scheduler: `PYTHONPATH=backend .venv/bin/python -m app`.
-
-## Проверка на сохранённом HAR
+## HAR replay (без сети)
 
 ```sh
-PYTHONPATH=backend .venv/bin/python scripts/replay_edu_har.py /path/to/edu.misis.ru3.har \
-  --group МПИ-26-1-1 --start 2026-09-07 --weeks 4 --database data/api-preview.sqlite3
-
-SCHEDULE_SOURCE=edu_api ENABLE_SCHEDULER=false DATABASE_PATH=data/api-preview.sqlite3 \
-  PYTHONPATH=backend .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+PYTHONPATH=backend .venv/bin/python scripts/replay_edu_har.py /path/to/edu.misis.ru.har \
+  --group МПИ-26-1-1 --start 2026-09-07 --weeks 4
 ```
-
-Скрипт использует настоящий адаптер с транспортом из записи. Он не выполняет JavaScript, не воспроизводит аналитику, не обращается в сеть и не подставляет ответы для отсутствующих запросов. Данные помечаются как проверочный импорт, временем обновления служит время записи HAR. Для живого обновления требуется обычный запуск с `ENABLE_SCHEDULER=true`.
 
 ## Проверки
 
 ```sh
 .venv/bin/pytest backend/tests -q
-cd frontend
-npm test
-npm run typecheck
-npm run build
+cd frontend && npm test && npm run typecheck && npm run build
 ```
-
-Тесты проверяют оба источника через одинаковый HTTP-контракт, календарные даты, подгруппы, сохранение вариантов занятий, неполные ответы, JSON-RPC ошибки, лимиты транспорта, транзакционный откат и переключение источника. HAR, `.env`, SQLite и локальные зависимости исключены из Git.

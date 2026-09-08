@@ -1,14 +1,4 @@
-"""Composition root: concrete adapters are selected and wired only here."""
-
-
-def build_source(settings):
-    if settings.schedule_source == 'excel':
-        from .sources.excel.source import ExcelSource
-        return ExcelSource(settings)
-    if settings.schedule_source == 'edu_api':
-        from .sources.edu.source import EduApiSource
-        return EduApiSource(settings)
-    raise ValueError('Unknown schedule source')
+"""Composition root: wire the active schedule provider here when adding backends."""
 
 
 def build_transport_factory(settings):
@@ -22,6 +12,7 @@ def build_transport_factory(settings):
     return factory
 
 
-def build_repository(settings):
-    from .repositories.sqlite import Database
-    return Database(settings.database_path)
+def build_provider(settings, transport_factory=None):
+    """Return the active ScheduleProvider. Add new backends as explicit branches."""
+    from .sources.edu.live import EduLiveService
+    return EduLiveService(settings, transport_factory or build_transport_factory(settings))

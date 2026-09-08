@@ -34,7 +34,7 @@ class EduMapper:
         expected = {monday + timedelta(days=n) for n in range(6)}
         if len(rows) != 6 or {r.lesson_date for r in rows} != expected:
             raise ValueError('Incomplete calendar response: expected six dated rows')
-        bells, appearances = defaultdict(set), defaultdict(set)
+        bells, appearances, cell_lessons = defaultdict(set), defaultdict(set), defaultdict(list)
         for row in rows:
             if row.lesson_date.weekday() != row.day_number - 1:
                 raise ValueError('Date and weekday disagree')
@@ -46,6 +46,7 @@ class EduMapper:
                     bells[cell.key].add(time)
                 for lesson in cell.lessons:
                     appearances[row.lesson_date, lesson.lesson_index].add(cell.key)
+                    cell_lessons[row.lesson_date, cell.key].append(lesson)
         normalized = []
         for row in rows:
             if not window.start <= row.lesson_date <= window.end:
@@ -69,7 +70,15 @@ class EduMapper:
                             warnings.append('Время по стандартной московской сетке звонков.')
                     if time is None:
                         warnings.append('Источник не позволяет однозначно определить время занятия.')
-                    if len(appearances[row.lesson_date, lesson.lesson_index]) > 1:
+                    # Same lesson_index in adjacent pairs is normal (double period). Warn only when
+                    # it also shares a cell with another lesson of the same subject — the case the
+                    # university UI merges and our flat list can look wrong.
+                    slots = appearances[row.lesson_date, lesson.lesson_index]
+                    if len(slots) > 1 and any(
+                        other.lesson_index != lesson.lesson_index and (
+                            (lesson.subject_id and other.subject_id == lesson.subject_id) or
+                            other.subject_name == lesson.subject_name)
+                        for key in slots for other in cell_lessons[row.lesson_date, key]):
                         warnings.append('Источник повторяет эту запись в нескольких парах. Уточни время в официальном расписании.')
                     raw = lesson.model_dump(mode='json')
                     normalized.append(Lesson(
