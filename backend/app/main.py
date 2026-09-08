@@ -47,9 +47,13 @@ def create_app(settings=None):
     def groups():
         return db.groups()
 
+    @app.get('/api/catalog')
+    def catalog():
+        return db.catalog()
+
     @app.get('/api/schedule')
-    def schedule(group: str = Query(default='', max_length=100), weekday: Optional[int] = Query(default=None, ge=0, le=6)):
-        return db.schedule(group, weekday) if group else []
+    def schedule(group: str = Query(default='', max_length=100), weekday: Optional[int] = Query(default=None, ge=0, le=6), subgroup: Optional[int] = Query(default=None, ge=1, le=99)):
+        return db.schedule(group, weekday, subgroup) if group else []
 
     return app
 

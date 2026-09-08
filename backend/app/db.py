@@ -3,6 +3,8 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
+from .catalog import education_level, subgroup_ids
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS groups (name TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS lessons (
@@ -23,7 +25,6 @@ CREATE TABLE IF NOT EXISTS sync_state (
     source_url TEXT NOT NULL DEFAULT '', warnings TEXT NOT NULL DEFAULT '[]'
 );
 INSERT OR IGNORE INTO sync_state(singleton) VALUES(1);
-PRAGMA user_version=1;
 """
 
 
@@ -47,6 +48,14 @@ class Database:
         with self.connect() as db:
             db.execute('PRAGMA journal_mode=WAL')
             db.executescript(SCHEMA)
+            columns = {row['name'] for row in db.execute('PRAGMA table_info(groups)')}
+            if 'institutes' not in columns:
+                db.execute("ALTER TABLE groups ADD COLUMN institutes TEXT NOT NULL DEFAULT '[]'")
+            if 'education_level' not in columns:
+                db.execute("ALTER TABLE groups ADD COLUMN education_level TEXT NOT NULL DEFAULT ''")
+                db.executemany('UPDATE groups SET education_level=? WHERE name=?',
+                               [(education_level(row[0]), row[0]) for row in db.execute('SELECT name FROM groups').fetchall()])
+            db.execute('PRAGMA user_version=2')
 
     def replace(self, lessons, groups, timestamp, source_url, warnings):
         if not lessons or not groups:
@@ -59,7 +68,8 @@ class Database:
             db.execute('BEGIN IMMEDIATE')
             db.execute('DELETE FROM lessons')
             db.execute('DELETE FROM groups')
-            db.executemany('INSERT INTO groups(name) VALUES(?)', [(g,) for g in sorted(groups)])
+            db.executemany('INSERT INTO groups(name,institutes,education_level) VALUES(?,?,?)',
+                           [(g, json.dumps(sorted(groups[g]) if isinstance(groups, dict) else [], ensure_ascii=False), education_level(g)) for g in sorted(groups)])
             db.executemany(f"INSERT INTO lessons({','.join(columns)}) VALUES({','.join('?' for _ in columns)})", [tuple(r[c] for c in columns) for r in records.values()])
             db.execute('UPDATE sync_state SET last_success=?, last_attempt=?, last_error=NULL, source_url=?, warnings=? WHERE singleton=1', (timestamp, timestamp, source_url, json.dumps(warnings, ensure_ascii=False)))
 
@@ -81,11 +91,22 @@ class Database:
         with self.connect() as db:
             return [r[0] for r in db.execute('SELECT name FROM groups ORDER BY name')]
 
-    def schedule(self, group, weekday=None):
+    def catalog(self):
+        with self.connect() as db:
+            return [dict(name=row['name'], institutes=json.loads(row['institutes']), education_level=row['education_level'])
+                    for row in db.execute('SELECT name,institutes,education_level FROM groups ORDER BY name')]
+
+    def schedule(self, group, weekday=None, subgroup=None):
         with self.connect() as db:
             query = 'SELECT * FROM lessons WHERE group_name=?'
             params = [group]
             if weekday is not None:
                 query += ' AND weekday=?'
                 params.append(weekday)
-            return [dict(r) for r in db.execute(query + ' ORDER BY weekday,start_time,subject,subgroup,week_pattern', params)]
+            result = []
+            for row in db.execute(query + ' ORDER BY weekday,start_time,subject,subgroup,week_pattern', params):
+                item = dict(row)
+                item['subgroup_ids'] = subgroup_ids(item['subgroup'])
+                if subgroup is None or not item['subgroup_ids'] or subgroup in item['subgroup_ids']:
+                    result.append(item)
+            return result

@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   app: { head: {
     htmlAttrs: { lang: 'ru' },
     title: 'Misisync — расписание МИСИС',
-    meta: [{ name: 'description', content: 'Расписание занятий МИСИС по группам и дням. Актуальные данные из официальных таблиц университета.' }, { name: 'theme-color', content: '#0b5850' }],
+    meta: [{ name: 'description', content: 'Расписание занятий МИСИС по группам, дням и подгруппам. Актуальные данные из официальных таблиц университета.' }, { name: 'theme-color', content: '#0541f0' }],
     link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
   } }
 })

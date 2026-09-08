@@ -8,6 +8,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 
 from .parser import ParseError, parse_workbook
+from .catalog import institute_name
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +49,10 @@ async def download(client, url, max_bytes):
         return b''.join(parts), str(response.url)
 
 
-async def discover(client, settings):
+async def discover(client, settings, with_labels=False):
     if is_workbook(settings.source_url):
-        return [settings.source_url]
-    queue, visited, found = [(settings.source_url, 0)], set(), set()
+        return [(settings.source_url, '')] if with_labels else [settings.source_url]
+    queue, visited, found = [(settings.source_url, 0)], set(), {}
     host = urlparse(settings.source_url).netloc
     while queue:
         url, depth = queue.pop(0)
@@ -69,12 +70,13 @@ async def discover(client, settings):
                 continue
             if is_workbook(target):
                 if not settings.source_link_pattern or re.search(settings.source_link_pattern, target + ' ' + label, re.I):
-                    found.add(target)
+                    if target not in found:
+                        found[target] = label
             elif depth < 2 and ('расписание учебных' in label.lower() or urlparse(target).path.rstrip('/') == '/students/schedule'):
                 queue.append((target, depth + 1))
     if not found:
         raise ValueError('No matching XLS/XLSX schedule links found')
-    return sorted(found)
+    return sorted(found.items()) if with_labels else sorted(found)
 
 
 class Synchronizer:
@@ -106,12 +108,16 @@ class Synchronizer:
                 return False
 
     async def fetch(self, client):
-        lessons, groups, warnings = [], set(), []
-        for url in await discover(client, self.settings):
+        lessons, groups, warnings = [], {}, []
+        for url, label in await discover(client, self.settings, with_labels=True):
             data, final_url = await download(client, url, self.settings.max_download_bytes)
             parsed, names, notes = await asyncio.to_thread(parse_workbook, data, final_url, self.settings.upper_row_week)
             lessons.extend(parsed)
-            groups.update(names)
+            institute = institute_name(final_url, label)
+            for name in names:
+                groups.setdefault(name, set())
+                if institute:
+                    groups[name].add(institute)
             warnings.extend(notes)
         if not lessons:
             raise ParseError('No lessons found in selected sources')
