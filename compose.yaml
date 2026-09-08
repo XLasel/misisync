@@ -3,14 +3,22 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
-      DATABASE_PATH: ${DATABASE_PATH:-/data/misisync.sqlite3}
-      SOURCE_URL: ${SOURCE_URL:-https://misis.ru/students/}
-      SOURCE_LINK_PATTERN: ${SOURCE_LINK_PATTERN:-}
+      SCHEDULE_SOURCE: ${SCHEDULE_SOURCE:-excel}
+      DATABASE_PATH: ${DATABASE_PATH:-/data/schedule.sqlite3}
       UPDATE_INTERVAL_SECONDS: ${UPDATE_INTERVAL_SECONDS:-14400}
       REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-60}
       MAX_DOWNLOAD_BYTES: ${MAX_DOWNLOAD_BYTES:-31457280}
       ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
-      UPPER_ROW_WEEK: ${UPPER_ROW_WEEK:-odd}
+      SYNC_WEEKS: ${SYNC_WEEKS:-4}
+      EXCEL_SOURCE_URL: ${EXCEL_SOURCE_URL:-https://misis.ru/students/}
+      EXCEL_LINK_PATTERN: ${EXCEL_LINK_PATTERN:-}
+      EXCEL_UPPER_ROW_WEEK: ${EXCEL_UPPER_ROW_WEEK:-odd}
+      EXCEL_TERM_START: ${EXCEL_TERM_START:-2026-09-01}
+      EXCEL_TERM_END: ${EXCEL_TERM_END:-2027-01-31}
+      EDU_API_URL: ${EDU_API_URL:-https://edu.misis.ru/schedule}
+      EDU_FILIAL: ${EDU_FILIAL:-MOSCOW}
+      EDU_GROUPS: ${EDU_GROUPS:-МПИ-26-1-1,МПИ-26-1-2}
+      EDU_REQUEST_DELAY_SECONDS: ${EDU_REQUEST_DELAY_SECONDS:-0.25}
     volumes:
       - schedule_data:/data
     healthcheck:

@@ -1,32 +1,39 @@
-export type Lesson = {
-  id: string; group_name: string; weekday: number; start_time: string; end_time: string;
-  subject: string; lesson_type: string; teacher: string; room: string; subgroup: string;
-  subgroup_ids: number[]; week_pattern: string; notes: string; raw_text: string;
-  source_url: string; source_sheet: string; source_cell: string;
-}
-export type LessonCard = Lesson & { originals: Lesson[] }
+import type { Lesson } from '../types/schedule'
 
-export function scheduleCards(rows: Lesson[], week: string, subgroup: string): LessonCard[] {
-  const cards = new Map<string, LessonCard>()
+export function scheduleCards(rows: Lesson[], subgroup: string): Lesson[] {
+  const cards = new Map<string, Lesson>()
   for (const row of rows) {
-    const ids = row.subgroup_ids || []
-    if (week !== 'all' && row.week_pattern !== 'all' && row.week_pattern !== week) continue
+    const ids = row.subgroup_ids
     if (subgroup !== 'all' && ids.length && !ids.includes(Number(subgroup))) continue
-    const key = JSON.stringify([row.group_name, row.weekday, row.start_time, row.end_time,
-      row.subject, row.lesson_type, row.teacher, row.room, row.week_pattern, row.notes,
-      !ids.length && row.subgroup ? row.subgroup : ''])
+    const key = JSON.stringify([row.group_id, row.date, row.start_time, row.end_time,
+      row.subject, row.lesson_type, row.teachers, row.rooms, row.notes, row.warnings,
+      !ids.length ? row.subgroup_label : ''])
     const existing = cards.get(key)
-    if (!existing) cards.set(key, { ...row, subgroup_ids: [...ids], originals: [row] })
+    if (!existing) cards.set(key, { ...row, subgroup_ids: [...ids], evidence: [...row.evidence] })
     else {
-      existing.originals.push(row)
+      existing.evidence.push(...row.evidence)
       existing.subgroup_ids = !existing.subgroup_ids.length || !ids.length
         ? [] : [...new Set([...existing.subgroup_ids, ...ids])].sort((a, b) => a - b)
-      existing.subgroup = existing.subgroup_ids.length ? existing.subgroup_ids.join(', ') + ' подгруппы' : ''
     }
   }
-  return [...cards.values()].sort((a, b) => a.weekday - b.weekday || a.start_time.localeCompare(b.start_time) || a.subject.localeCompare(b.subject, 'ru'))
+  return [...cards.values()].sort((a, b) => a.date.localeCompare(b.date) ||
+    (a.start_time || '99:99').localeCompare(b.start_time || '99:99') || a.subject.localeCompare(b.subject, 'ru'))
 }
 
 export function normalizeGroupSearch(value: string) {
   return value.normalize('NFKC').trim().toLocaleUpperCase('ru').replace(/[–—−]/g, '-').replace(/\s+/g, '')
+}
+
+export function addDays(iso: string, count: number) {
+  const date = new Date(`${iso}T12:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + count)
+  return date.toISOString().slice(0, 10)
+}
+
+export function mondayOf(iso: string) {
+  return addDays(iso, -((new Date(`${iso}T12:00:00Z`).getUTCDay() + 6) % 7))
+}
+
+export function moscowToday() {
+  return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Moscow', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 }

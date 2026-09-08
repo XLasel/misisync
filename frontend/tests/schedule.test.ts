@@ -1,34 +1,59 @@
 /// <reference types="node" />
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { normalizeGroupSearch, scheduleCards } from '../utils/schedule.ts'
-import type { Lesson } from '../utils/schedule.ts'
+import { normalizeGroupSearch, scheduleCards, addDays, mondayOf } from '../utils/schedule.ts'
+import { createScheduleApi } from '../services/schedule-api.ts'
+import type { Lesson } from '../types/schedule.ts'
 
-const base: Lesson = { id: 'common', group_name: 'БИВТ-26-1', weekday: 0, start_time: '09:00', end_time: '10:35', subject: 'Математика', lesson_type: 'Лекция', teacher: 'Иванов И. И.', room: 'Б-101', subgroup: '', subgroup_ids: [], week_pattern: 'all', notes: '', raw_text: 'original', source_url: '', source_sheet: '', source_cell: '' }
+const base: Lesson = { id: 'common', group_id: 'БИВТ-26-1', date: '2026-09-07', start_time: '09:00', end_time: '10:35', subject: 'Математика', lesson_type: 'Лекция', teachers: ['Иванов И. И.'], rooms: ['Б-101'], subgroup_label: '', subgroup_ids: [], notes: [], warnings: [], evidence: [{ url: '', label: 'cell', raw_text: 'original', external_id: null }] }
 
-test('subgroup filter keeps common and shared lessons, excludes other subgroups', () => {
-  const rows = [base, { ...base, id: 'one', subject: 'Практика 1', subgroup: '1', subgroup_ids: [1] },
-    { ...base, id: 'two', subject: 'Практика 2', subgroup: '2', subgroup_ids: [2] },
-    { ...base, id: 'shared', subject: 'Практика 1,3', subgroup: '1, 3', subgroup_ids: [1, 3] }]
-  assert.deepEqual(scheduleCards(rows, 'all', '1').map(x => x.id).sort(), ['common', 'one', 'shared'])
-  assert.deepEqual(scheduleCards(rows, 'all', '3').map(x => x.id).sort(), ['common', 'shared'])
+test('subgroup filter retains unspecified and shared classes', () => {
+  const rows = [base, { ...base, id: 'one', subject: 'Практика 1', subgroup_ids: [1] },
+    { ...base, id: 'two', subject: 'Практика 2', subgroup_ids: [2] },
+    { ...base, id: 'shared', subject: 'Практика 1,3', subgroup_ids: [1, 3] }]
+  assert.deepEqual(scheduleCards(rows, '1').map(x => x.id).sort(), ['common', 'one', 'shared'])
+  assert.deepEqual(scheduleCards(rows, '3').map(x => x.id).sort(), ['common', 'shared'])
 })
 
-test('one card for an identical lesson in two lanes, both originals retained', () => {
-  const rows = [{ ...base, id: 'one', subgroup: '1 подгруппа', subgroup_ids: [1] }, { ...base, id: 'two', subgroup: '2 подгруппа', subgroup_ids: [2] }]
-  const cards = scheduleCards(rows, 'all', 'all')
+test('identical subgroup classes combine without mutating originals', () => {
+  const rows = [{ ...base, id: 'one', subgroup_ids: [1] }, { ...base, id: 'two', subgroup_ids: [2] }]
+  const cards = scheduleCards(rows, 'all')
   assert.equal(cards.length, 1)
   assert.deepEqual(cards[0]!.subgroup_ids, [1, 2])
-  assert.equal(cards[0]!.originals.length, 2)
+  assert.equal(cards[0]!.evidence.length, 2)
   assert.deepEqual(rows[0]!.subgroup_ids, [1])
+  assert.equal(rows[0]!.evidence.length, 1)
 })
 
-test('different rooms and week conditions are never merged', () => {
-  const rows = [base, { ...base, id: 'room', room: 'Б-202' }, { ...base, id: 'week', week_pattern: 'even' }]
-  assert.equal(scheduleCards(rows, 'all', 'all').length, 3)
-  assert.equal(scheduleCards(rows, 'odd', 'all').length, 2)
+test('different dates, rooms, types and ambiguous times survive grouping', () => {
+  const rows = [base, { ...base, id: 'room', rooms: ['Б-202'] },
+    { ...base, id: 'date', date: '2026-09-14' }, { ...base, id: 'type', lesson_type: 'Практика' },
+    { ...base, id: 'repeat', start_time: '10:50', end_time: '12:25', warnings: ['Повтор в источнике'] }]
+  assert.equal(scheduleCards(rows, 'all').length, 5)
 })
 
-test('search tolerates spaces, case, and alternate dashes', () => {
+test('unknown time sorts after known times without a fabricated default', () => {
+  const unknown = { ...base, id: 'unknown', start_time: null, end_time: null }
+  assert.deepEqual(scheduleCards([unknown, base], 'all').map(x => x.id), ['common', 'unknown'])
+})
+
+test('calendar navigation crosses year and month boundaries using calendar dates', () => {
+  assert.equal(mondayOf('2027-01-01'), '2026-12-28')
+  assert.equal(addDays('2026-09-28', 6), '2026-10-04')
+  assert.equal(addDays('2026-12-28', 7), '2027-01-04')
+})
+
+test('frontend gateway uses one contract independent of provider', async () => {
+  const requests: unknown[] = []
+  const api = createScheduleApi(async (path, options) => { requests.push([path, options]); return {} })
+  const signal = new AbortController().signal
+  await api.groups()
+  await api.schedule('МПИ-26-1-1', { start: '2026-09-07', end: '2026-09-13' }, signal)
+  assert.deepEqual(requests, [['/api/groups', undefined], ['/api/schedule', {
+    query: { group_id: 'МПИ-26-1-1', start: '2026-09-07', end: '2026-09-13' }, signal,
+  }]])
+})
+
+test('search normalizes spaces, case and dashes', () => {
   assert.equal(normalizeGroupSearch(' бивт — 26–1 '), 'БИВТ-26-1')
 })

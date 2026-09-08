@@ -1,11 +1,17 @@
-"""Run an on-demand import: python -m app (run separately from the API)."""
+"""One explicit update using the configured source and storage adapters."""
 import asyncio
-
+from .composition import build_repository, build_source, build_transport_factory
 from .config import Settings
-from .db import Database
 from .sync import Synchronizer
 
-settings = Settings.from_env()
-database = Database(settings.database_path)
-database.initialize()
-raise SystemExit(0 if asyncio.run(Synchronizer(database, settings).run_once()) else 1)
+
+def main():
+    settings = Settings.from_env()
+    repository = build_repository(settings)
+    repository.initialize()
+    updater = Synchronizer(repository, build_source(settings), settings, build_transport_factory(settings))
+    return 0 if asyncio.run(updater.run_once()) else 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

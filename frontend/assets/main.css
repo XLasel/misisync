@@ -23,3 +23,5 @@ main{max-width:1290px;margin:auto;padding:38px 36px 0}.heading{display:flex;just
 
 /* Native controls, selections and autofill also use the dark palette. */
 ::selection{background:#365ba0;color:#fff}option{background:var(--surface);color:#e3e9f4}input:-webkit-autofill{-webkit-text-fill-color:#e3e9f4;-webkit-box-shadow:0 0 0 1000px var(--surface) inset;caret-color:#e3e9f4}.primary-button:hover{background:#386aef}input,select{caret-color:#a4c0ff}
+
+.calendar-control button{border:1px solid var(--line);border-radius:7px;background:var(--raised);color:var(--heading);min-width:40px;min-height:40px;font-size:23px}.calendar-control>span{font-size:14px;color:var(--heading);min-width:155px;text-align:center}.day-heading h3 small{font-size:12px;font-weight:400;color:var(--muted);margin-left:7px}.time-column>span{overflow-wrap:anywhere}
