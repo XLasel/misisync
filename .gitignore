@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.sqlite*
+data/
+node_modules/
+.nuxt/
+.output/
+.DS_Store
+artifacts/

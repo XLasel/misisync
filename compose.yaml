@@ -1,0 +1,38 @@
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_PATH: ${DATABASE_PATH:-/data/misisync.sqlite3}
+      SOURCE_URL: ${SOURCE_URL:-https://misis.ru/students/}
+      SOURCE_LINK_PATTERN: ${SOURCE_LINK_PATTERN:-}
+      UPDATE_INTERVAL_SECONDS: ${UPDATE_INTERVAL_SECONDS:-14400}
+      REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-60}
+      MAX_DOWNLOAD_BYTES: ${MAX_DOWNLOAD_BYTES:-31457280}
+      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
+      UPPER_ROW_WEEK: ${UPPER_ROW_WEEK:-odd}
+    volumes:
+      - schedule_data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      NUXT_API_BASE: ${NUXT_API_BASE:-http://backend:8000}
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  schedule_data:
