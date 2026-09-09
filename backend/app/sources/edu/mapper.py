@@ -80,9 +80,18 @@ class EduMapper:
                             other.subject_name == lesson.subject_name)
                         for key in slots for other in cell_lessons[row.lesson_date, key]):
                         warnings.append('Источник повторяет эту запись в нескольких парах. Уточни время в официальном расписании.')
-                    raw = lesson.model_dump(mode='json')
+                    # An explicit public projection: new upstream fields must never leak to clients.
+                    raw = {
+                        'subject_name': lesson.subject_name,
+                        'lesson_type': lesson.lesson_type,
+                        'lesson_start': lesson.lesson_start,
+                        'lesson_end': lesson.lesson_end,
+                        'teachers': [t.teacher_name for t in lesson.teachers if t.teacher_name],
+                        'rooms': [r.room_name for r in lesson.rooms if r.room_name],
+                        'subgroups': sorted({g.subgroup_number for g in memberships if g.subgroup_number is not None}),
+                    }
                     normalized.append(Lesson(
-                        id=identity('edu_api', group.name, row.lesson_date.isoformat(), cell.key, raw),
+                        id=identity('edu_api', group.name, row.lesson_date.isoformat(), cell.key, lesson.lesson_index, raw),
                         group_id=group.name, date=row.lesson_date,
                         start_time=time[0] if time else None, end_time=time[1] if time else None,
                         subject=lesson.subject_name, lesson_type=lesson.lesson_type,

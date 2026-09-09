@@ -230,3 +230,24 @@ def test_snapshot_rejects_lesson_outside_coverage():
             lessons=[Lesson(id='one', group_id=GROUP, date=date(2027, 1, 1), subject='Math',
                             evidence=[Evidence(url='https://example.test', label='cell', raw_text='Math')])],
         )
+
+
+def test_public_evidence_does_not_publish_upstream_extras_or_other_groups():
+    source = EduApiSource(Settings(edu_request_delay_seconds=0))
+    group = EduGroup(id='42', name=GROUP, subgroups=[])
+    original = lesson(subgroup=1)
+    before = source.mapper.normalize(CalendarResult.model_validate(calendar(entries=[original])), group, WINDOW.start, WINDOW)
+    enriched = {**original, 'lms_password': 'private-lms-token', 'meeting_url': 'https://private.example/secret'}
+    enriched['teachers'] = [{'teacher_name': 'Teacher', 'email': 'private@example.test'}]
+    enriched['rooms'] = [{'room_name': 'Online', 'access_code': 'secret-room-code'}]
+    enriched['ed_groups'] = [*original['ed_groups'], dict(group_id='other', group_name='PRIVATE-GROUP', subgroup_id=None, subgroup_number=None)]
+    result = source.mapper.normalize(CalendarResult.model_validate(calendar(entries=[enriched])), group, WINDOW.start, WINDOW)
+    public = result[0].model_dump_json()
+    for value in ['private-lms-token', 'private@example.test', 'secret-room-code', 'PRIVATE-GROUP', 'meeting_url']:
+        assert value not in public
+    assert result[0].id == before[0].id
+    evidence = json.loads(result[0].evidence[0].raw_text)
+    assert evidence['subject_name'] == 'Math'
+    assert evidence['teachers'] == ['Teacher']
+    assert evidence['rooms'] == ['Online']
+    assert evidence['subgroups'] == [1]

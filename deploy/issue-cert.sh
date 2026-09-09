@@ -1,31 +1,18 @@
 #!/usr/bin/env bash
-# Issue or renew Let's Encrypt certs, then switch nginx to TLS template.
 set -euo pipefail
-
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT"
-
-# shellcheck disable=SC1091
-set -a
-source .env
-set +a
-
-: "${DOMAIN:?DOMAIN required}"
+# shellcheck source=deploy/common.sh
+source "$(dirname "$0")/common.sh"
 EMAIL="${CERTBOT_EMAIL:-admin@${DOMAIN}}"
+# Fail before issuance if automatic renewal cannot be installed.
+bash deploy/install-renewal.sh
 
-mkdir -p deploy/certbot/www deploy/certbot/conf deploy/nginx/active
-
-echo "Requesting certificate for ${DOMAIN}..."
 docker run --rm \
-  -v "$(pwd)/deploy/certbot/conf:/etc/letsencrypt" \
-  -v "$(pwd)/deploy/certbot/www:/var/www/certbot" \
-  certbot/certbot certonly --webroot -w /var/www/certbot \
-  -d "${DOMAIN}" --email "${EMAIL}" --agree-tos --no-eff-email --non-interactive
+  -v "$ROOT/deploy/certbot/conf:/etc/letsencrypt" \
+  -v "$ROOT/deploy/certbot/www:/var/www/certbot" \
+  "$CERTBOT_IMAGE" certonly --webroot -w /var/www/certbot \
+  --cert-name "$DOMAIN" -d "$DOMAIN" --email "$EMAIL" \
+  --agree-tos --no-eff-email --non-interactive
 
-echo "Enabling TLS nginx template..."
 cp deploy/nginx/ssl.conf.tls deploy/nginx/active/default.conf.template
-
-docker compose -f compose.yaml -f compose.prod.yaml up -d --no-deps --force-recreate nginx
-
-echo "HTTPS enabled for https://${DOMAIN}/"
-echo "Renew later with: ./deploy/issue-cert.sh  (certbot renew is safe to re-run)"
+"${COMPOSE[@]}" up -d --no-deps --force-recreate --wait --wait-timeout 60 nginx
+echo "HTTPS enabled for https://${DOMAIN}/; renewal is scheduled twice a day."

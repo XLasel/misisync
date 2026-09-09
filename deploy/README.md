@@ -10,7 +10,8 @@ Nginx **лежит в репозитории** (`deploy/nginx/`, `compose.prod.y
 
 ```sh
 sudo apt update
-sudo apt install -y git curl
+sudo apt install -y git curl cron
+sudo systemctl enable --now cron
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker "$USER"
 # выйти из SSH и зайти снова
@@ -57,15 +58,30 @@ chmod +x deploy/*.sh
 ./deploy/issue-cert.sh
 ```
 
-Скрипт получит сертификат и подменит nginx-шаблон на TLS. Сайт: `https://…`.
+Скрипт установит cron-задачу продления, получит сертификат и переключит nginx на TLS. Сайт: `https://…`.
 
-Обновление сертификата позже — снова `./deploy/issue-cert.sh` или cron с `certbot renew` + `docker compose … up -d nginx`.
+Продление автоматически проверяется дважды в сутки через crontab пользователя деплоя. Задача также устанавливается при каждом деплое, если сертификат уже есть. Другие cron-задачи сохраняются; повторная установка не создаёт дублей.
+
+Однократная проверка через тестовый сервер Let's Encrypt:
+
+```sh
+./deploy/renew-cert.sh --dry-run
+crontab -l
+```
+
+Обычный запуск: `./deploy/renew-cert.sh`. После фактического продления проверяется конфигурация nginx и выполняется reload. При ошибке reload остаётся маркер, и следующая попытка повторит перезагрузку. Ошибка Certbot завершает скрипт с ненулевым кодом. Лог: `deploy/certbot/renew.log` (не отслеживается Git). Для уже работающего сервера сначала установите и включите `cron` командами из первого раздела.
+
+Скрипты деплоя, выпуска и продления сертификата используют один `flock` в `.deploy.lock`. Не запускайте в обход них параллельные команды, меняющие production-контейнеры.
 
 ---
 
 ## Автодеплой из GitHub
 
-Workflow: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — при пуше в `main` (и вручную) SSH на сервер → `git reset --hard origin/main` → `./deploy/update.sh`.
+Workflow: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — при PR/push выполняет backend-тесты, проверки shell-скриптов, frontend-тесты, проверку типов, ESLint и production-сборку. После успешных проверок push в `main` (или ручной запуск для `main`) допускается к деплою.
+
+По SSH разворачивается точный SHA проверенного коммита. Если `main` уже продвинулся, устаревший деплой пропускается. Новый push не отменяет активный деплой. `update.sh` ждёт здорового состояния контейнеров; ошибка сборки или проверки здоровья завершает workflow с ошибкой. Автоматического отката на предыдущую версию пока нет.
+
+Используется системный OpenSSH с обязательной проверкой ключа хоста. Сторонний SSH Action удалён; оставшиеся официальные Actions закреплены полными commit SHA. В CI минимальные права `contents: read`, production-ключ доступен только шагу деплоя.
 
 ### Secrets в GitHub (Settings → Secrets and variables → Actions)
 
@@ -75,6 +91,19 @@ Workflow: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — 
 | `DEPLOY_USER` | `ubuntu` / `root` |
 | `DEPLOY_SSH_KEY` | приватный ключ целиком (`-----BEGIN …`) |
 | `DEPLOY_PATH` | `/opt/misisync` |
+| `DEPLOY_KNOWN_HOSTS` | Проверенная строка known_hosts для VPS (см. ниже) |
+
+### Проверка ключа сервера (нужна и для существующего деплоя)
+
+В доверенной консоли Timeweb на VPS получите публичный ключ хоста:
+
+```sh
+cat /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+Создайте GitHub Secret `DEPLOY_KNOWN_HOSTS` в формате `HOST ssh-ed25519 AAAA…`, где `HOST` совпадает с `DEPLOY_HOST`, а ключ скопирован из консоли. Это **публичный ключ сервера**, не приватный ключ пользователя деплоя. При нестандартном SSH-порте используйте `[HOST]:PORT` и задайте repository variable `DEPLOY_PORT` (по умолчанию 22). Непроверенный результат `ssh-keyscan` не заменяет проверку в доверенной консоли.
+
+Без нового секрета workflow остановится до SSH-подключения. При смене VPS/ключа обновите секрет после проверки нового ключа.
 
 ### SSH-ключ для деплоя
 
@@ -103,3 +132,8 @@ Actions → Deploy to Timeweb → должен стать зелёным пос�
 | Прод | `docker compose -f compose.yaml -f compose.prod.yaml up --build -d` → nginx `:80`/`:443` |
 
 Backend наружу не публикуется. `TRUST_PROXY=true` только за nginx из этого compose (он выставляет `X-Forwarded-*`).
+
+
+## Обновления образов
+
+Nginx обновлён с ветки 1.27 до 1.30.4 и закреплён digest в `compose.prod.yaml`; Certbot закреплён digest в `deploy/common.sh`. При обновлении сверяйте релизы и повторяйте проверку конфигурации. [Официальные предупреждения nginx](https://nginx.org/en/security_advisories.html).

@@ -1,31 +1,108 @@
-name: Deploy to Timeweb
+name: Validate and deploy to Timeweb
 
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
-concurrency:
-  group: deploy-production
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
-  deploy:
+  backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script_stop: true
-          script: |
-            set -euo pipefail
-            APP_DIR="${{ secrets.DEPLOY_PATH }}"
-            cd "$APP_DIR"
-            git fetch origin main
-            git checkout main
-            git reset --hard origin/main
-            chmod +x deploy/update.sh deploy/issue-cert.sh
-            ./deploy/update.sh
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements-dev.txt
+      - run: pytest backend/tests -q
+      - name: Check deployment scripts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck
+          for script in deploy/*.sh; do bash -n "$script"; done
+          shellcheck deploy/*.sh
+      - name: Validate nginx and production Compose
+        run: python scripts/check_nginx.py
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Deploy the tested commit over verified SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_HOST:?Missing DEPLOY_HOST}"
+          : "${DEPLOY_USER:?Missing DEPLOY_USER}"
+          : "${DEPLOY_PATH:?Missing DEPLOY_PATH}"
+          : "${DEPLOY_SSH_KEY:?Missing DEPLOY_SSH_KEY}"
+          : "${DEPLOY_KNOWN_HOSTS:?Add the verified server host key as DEPLOY_KNOWN_HOSTS}"
+          umask 077
+          SSH_DIR=$(mktemp -d)
+          trap 'rm -rf "$SSH_DIR"' EXIT
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$SSH_DIR/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$SSH_DIR/known_hosts"
+          printf -v REMOTE_COMMAND 'bash -s -- %q %q' "$DEPLOY_PATH" "$GITHUB_SHA"
+          ssh -p "$DEPLOY_PORT" -i "$SSH_DIR/key" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "$REMOTE_COMMAND" <<'REMOTE'
+          set -euo pipefail
+          APP_DIR=$1
+          TARGET_SHA=$2
+          [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]]
+          cd -- "$APP_DIR"
+          # Survives workflow interruption and also excludes manual deploy/cert renewal.
+          exec 9>.deploy.lock
+          flock -w 1800 9
+          export MISISYNC_DEPLOY_LOCKED=1
+          git fetch origin main
+          if [[ "$(git rev-parse FETCH_HEAD)" != "$TARGET_SHA" ]]; then
+            echo 'A newer main commit exists; this deployment is superseded.'
+            exit 0
+          fi
+          git reset --hard "$TARGET_SHA"
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          bash deploy/update.sh
+          REMOTE
