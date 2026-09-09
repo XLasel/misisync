@@ -1,0 +1,32 @@
+# Production overrides: public HTTP(S) via nginx, Next.js only on the Docker network.
+# Usage: docker compose -f compose.yaml -f compose.prod.yaml up --build -d
+#
+# Requires DOMAIN in .env (e.g. schedule.example.ru). Point the DNS A-record to this server.
+
+services:
+  frontend:
+    ports: !reset []
+    environment:
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env for production}
+      NGINX_ENVSUBST_FILTER: ^DOMAIN$
+    volumes:
+      - ./deploy/nginx/templates:/etc/nginx/templates:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

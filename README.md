@@ -15,6 +15,8 @@ docker compose up --build -d
 
 Открыть http://localhost:3000. Нужен работающий Docker Engine.
 
+Деплой на Timeweb VPS (nginx в Docker, HTTPS, автодеплой с GitHub): [deploy/README.md](deploy/README.md).
+
 ## Настройки
 
 | Переменная | Назначение |
@@ -33,7 +35,8 @@ docker compose up --build -d
 | `TRUST_PROXY` | Доверять `X-Forwarded-For` от внешнего прокси (по умолчанию `false`) |
 | `REQUEST_TIMEOUT_SECONDS`, `MAX_DOWNLOAD_BYTES` | Таймаут и лимит размера ответа |
 | `API_BASE` | Адрес бэкенда для прокси Next.js |
-| `PORT` | Порт фронтенда (3000) |
+| `PORT` | Порт фронтенда локально (3000); в prod наружу смотрит nginx |
+| `DOMAIN` | Hostname для nginx / Let's Encrypt (только prod) |
 
 В Compose наружу открыт только Next.js; FastAPI доступен внутри сети контейнеров. Лимит посетителей применяется в Next.js, где виден их IP. Если перед Next.js стоит внешний reverse proxy, включайте `TRUST_PROXY=true` только когда он перезаписывает `X-Forwarded-For`, а прямой доступ к Next.js закрыт. Иначе все посетители этого прокси разделяют один лимит. Кэш и лимиты локальны одному процессу; несколько экземпляров имеют независимое состояние.
 

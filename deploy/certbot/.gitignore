@@ -1,0 +1,4 @@
+deploy/certbot/conf/
+deploy/certbot/www/
+!deploy/certbot/conf/.gitkeep
+!deploy/certbot/www/.gitkeep
