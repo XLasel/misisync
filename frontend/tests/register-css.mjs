@@ -1,5 +1,5 @@
-import { registerHooks } from 'node:module'
 import { readFileSync } from 'node:fs'
+import { registerHooks } from 'node:module'
 
 // Node does not compile CSS. Provide class exports for DOM behavior tests;
 // Next's production build validates and scopes the actual stylesheets.

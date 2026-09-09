@@ -1,0 +1,48 @@
+:root {
+  color-scheme: dark;
+
+  --color-background: #0c1018;
+  --color-surface: #131b28;
+  --color-surface-muted: #19212d;
+  --color-surface-raised: #22324b;
+  --color-surface-highlight: #223456;
+  --color-surface-control: #0f1621;
+  --color-surface-overlay: #0e152099;
+  --color-surface-info: #1a2942;
+  --color-surface-badge: #1c2739;
+  --color-surface-badge-active: #293e64;
+
+  --color-text: #e3e9f4;
+  --color-heading: #eef3ff;
+  --color-text-muted: #a5afc3;
+  --color-text-subtle: #a8b6d0;
+  --color-text-strong: #dce6fa;
+  --color-text-disabled: #8797b2;
+  --color-text-divider: #596b89;
+  --color-on-action: #f8fbff;
+
+  --color-border: #2a3445;
+  --color-border-strong: #3b4d6c;
+  --color-action: #2d5cdb;
+  --color-action-hover: #386aef;
+  --color-accent: #8daaff;
+  --color-focus: #97b4ff;
+  --color-selection: #365ba0;
+  --color-selection-text: #fff;
+
+  --color-warning: #f0dcae;
+  --color-warning-muted: #e1bd87;
+  --color-warning-border: #76633f;
+  --color-warning-surface: #292519;
+
+  --color-lesson-default: #b1bdcf;
+  --color-lesson-lecture: #99b2ff;
+  --color-lesson-practice: #76d4c6;
+  --color-lesson-lab: #c3a3ef;
+  --color-lesson-lecture-surface: #182438;
+  --color-lesson-practice-surface: #142b2c;
+  --color-lesson-lab-surface: #251f35;
+
+  --shadow-popover: 0 12px 30px #0006;
+  --shadow-control: 0 1px 3px #0004;
+}

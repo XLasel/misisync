@@ -11,20 +11,20 @@
   padding-top: 17px;
   font-size: 16px;
   font-variant-numeric: tabular-nums;
-  color: var(--heading);
+  color: var(--color-heading);
 }
 .time strong {
   font-weight: 500;
 }
 .time > span {
   font-size: 13px;
-  color: #aab6cd;
+  color: var(--color-text-subtle);
   overflow-wrap: anywhere;
 }
 .card {
-  --kind: #b1bdcf;
-  --tint: #19212d;
-  border: 1px solid #344256;
+  --kind: var(--color-lesson-default);
+  --tint: var(--color-surface-muted);
+  border: 1px solid var(--color-border-strong);
   border-left: 3px solid var(--kind);
   background: var(--tint);
   border-radius: 10px;
@@ -32,16 +32,16 @@
   min-width: 0;
 }
 .card.lecture {
-  --kind: #99b2ff;
-  --tint: #182438;
+  --kind: var(--color-lesson-lecture);
+  --tint: var(--color-lesson-lecture-surface);
 }
 .card.practice {
-  --kind: #76d4c6;
-  --tint: #142b2c;
+  --kind: var(--color-lesson-practice);
+  --tint: var(--color-lesson-practice-surface);
 }
 .card.lab {
-  --kind: #c3a3ef;
-  --tint: #251f35;
+  --kind: var(--color-lesson-lab);
+  --tint: var(--color-lesson-lab-surface);
 }
 .header {
   display: flex;
@@ -63,9 +63,9 @@
   border-radius: 50%;
 }
 .subgroup {
-  color: #bdc9df;
-  background: #0e152099;
-  border: 1px solid #40506a;
+  color: var(--color-text-subtle);
+  background: var(--color-surface-overlay);
+  border: 1px solid var(--color-border-strong);
   padding: 3px 6px;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -75,7 +75,7 @@
   font-weight: 500;
   line-height: 1.55;
   margin: 11px 0 12px;
-  color: #e4ebf8;
+  color: var(--color-text);
   overflow-wrap: anywhere;
 }
 .meta {
@@ -85,12 +85,12 @@
   gap: 8px 20px;
   line-height: 1.6;
   font-size: 0.875rem;
-  color: #b1bfd7;
+  color: var(--color-text-subtle);
   overflow-wrap: anywhere;
 }
 .room {
   margin-left: auto;
-  color: #b9cdf0;
+  color: var(--color-accent);
   display: flex;
   gap: 5px;
   align-items: center;
@@ -106,16 +106,16 @@
 .notes {
   font-size: 13px;
   line-height: 1.6;
-  color: #e1bd87;
+  color: var(--color-warning-muted);
   white-space: pre-line;
 }
 .source {
   font-size: 0.75rem;
-  color: #a8b6d0;
+  color: var(--color-text-subtle);
   margin-top: 11px;
 }
 .record {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-border);
   margin-top: 9px;
   padding-top: 3px;
 }
@@ -124,7 +124,7 @@
   line-height: 1.7;
   overflow-wrap: anywhere;
   font-size: 13px;
-  color: #b2c0d8;
+  color: var(--color-text-subtle);
 }
 @media (max-width: 1000px) {
   .root {

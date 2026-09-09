@@ -1,12 +1,16 @@
+import { scheduleCards } from '@/entities/schedule/model/selectors'
+import type { Group, Schedule } from '@/entities/schedule/model/types'
+import { LessonCard } from '@/entities/schedule/ui/lesson-card'
+import { WeekNavigation } from '@/features/schedule-navigation/ui/week-navigation'
+import { ScheduleFreshness } from '@/features/schedule-refresh/ui/schedule-freshness'
+import { SubgroupFilter } from '@/features/subgroup-filter/ui/subgroup-filter'
+import { dateLabel, days, shortDays } from '@/shared/lib/calendar'
+import { classNames } from '@/shared/lib/class-names'
+import { Button } from '@/shared/ui/button'
+import { EmptyState } from '@/shared/ui/empty-state'
+import { Overline } from '@/shared/ui/overline'
+
 import s from './schedule-panel.module.css'
-import type { Group, Schedule } from '../../../entities/schedule/model/types'
-import { scheduleCards } from '../../../entities/schedule/model/selectors'
-import { LessonCard } from '../../../entities/schedule/ui/lesson-card'
-import { WeekNavigation } from '../../../features/schedule-navigation/ui/week-navigation'
-import { SubgroupFilter } from '../../../features/subgroup-filter/ui/subgroup-filter'
-import { ScheduleFreshness } from '../../../features/schedule-refresh/ui/schedule-freshness'
-import { days, shortDays, dateLabel } from '../../../shared/lib/calendar'
-import { EmptyState } from '../../../shared/ui/empty-state'
 
 type Props = {
   group: Group | null
@@ -51,9 +55,7 @@ export function SchedulePanel({
     content = (
       <EmptyState symbol="↻" title="Не удалось получить расписание" alert>
         <p>{error}</p>
-        <button className={s.button} onClick={onRefresh}>
-          Повторить
-        </button>
+        <Button onClick={onRefresh}>Повторить</Button>
       </EmptyState>
     )
   else if (!group)
@@ -65,12 +67,9 @@ export function SchedulePanel({
             : 'Найди её по названию. Мы покажем пары и запомним твой выбор.'}
         </p>
         {!catalogPending && (
-          <button
-            className={s.button}
-            onClick={() => document.getElementById('group-search')?.focus()}
-          >
+          <Button onClick={() => document.getElementById('group-search')?.focus()}>
             Найти группу ↗
-          </button>
+          </Button>
         )}
       </EmptyState>
     )
@@ -95,7 +94,7 @@ export function SchedulePanel({
     )
   else
     content = (
-      <ol className={[s.list, pending && s.refreshing].filter(Boolean).join(' ')}>
+      <ol className={classNames(s.list, pending && s.refreshing)}>
         {lessons.map((lesson) => (
           <LessonCard key={lesson.id} lesson={lesson} />
         ))}
@@ -106,7 +105,7 @@ export function SchedulePanel({
     <section className={s.root} aria-label="Расписание занятий" aria-busy={pending}>
       <div className={s.heading}>
         <div>
-          <span className={s.label}>РАСПИСАНИЕ ЗАНЯТИЙ</span>
+          <Overline>РАСПИСАНИЕ ЗАНЯТИЙ</Overline>
           <h2>{group?.name || 'Твоя учебная неделя'}</h2>
         </div>
       </div>

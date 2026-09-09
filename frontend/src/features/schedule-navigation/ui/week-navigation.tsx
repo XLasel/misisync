@@ -1,5 +1,7 @@
+import { addDays, dateLabel } from '@/shared/lib/calendar'
+
 import s from './week-navigation.module.css'
-import { addDays, dateLabel } from '../../../shared/lib/calendar'
+
 export function WeekNavigation({
   start,
   end,

@@ -1,5 +1,6 @@
-import test from 'node:test'
 import assert from 'node:assert/strict'
+import test from 'node:test'
+
 import { proxyBackend } from '../src/shared/server/backend-proxy'
 import { clientIp, isScheduleRequest } from '../src/shared/server/rate-limit'
 

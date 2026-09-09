@@ -1,6 +1,6 @@
 .root {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   padding: 23px;
 }
@@ -14,10 +14,10 @@
   font-size: 17px;
   margin: 0;
   font-weight: 600;
-  color: var(--heading);
+  color: var(--color-heading);
 }
 .number {
-  color: #a4b2ce;
+  color: var(--color-text-muted);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
@@ -37,7 +37,7 @@
   width: 17px;
   height: 17px;
   fill: none;
-  stroke: #a8b7d1;
+  stroke: var(--color-text-subtle);
   stroke-width: 1.7;
   pointer-events: none;
 }
@@ -46,17 +46,17 @@
   top: calc(100% + 7px);
   inset-inline: 0;
   z-index: 20;
-  background: var(--surface);
-  border: 1px solid #42516d;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
   border-radius: 10px;
-  box-shadow: 0 12px 30px #0006;
+  box-shadow: var(--shadow-popover);
   overflow: hidden;
 }
 .caption {
   padding: 12px;
   font-size: 12px;
-  color: var(--muted);
-  border-bottom: 1px solid var(--line);
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
 }
 .list {
   list-style: none;
@@ -80,12 +80,12 @@
 }
 .list li > span {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--color-text-muted);
 }
 .list li.highlighted,
 .list li:hover {
-  background: #223456;
-  color: var(--blue);
+  background: var(--color-surface-highlight);
+  color: var(--color-accent);
 }
 .list li[aria-selected='true'] strong::after {
   content: ' ✓';
@@ -94,14 +94,14 @@
   padding: 0 12px 10px;
   font-size: 12px;
   line-height: 1.6;
-  color: var(--muted);
+  color: var(--color-text-muted);
 }
 .refinements {
   margin-top: 16px;
   font-size: 0.875rem;
 }
 .refinements > summary {
-  color: #aebedf;
+  color: var(--color-text-subtle);
   padding: 5px 0;
 }
 .filters {
@@ -117,8 +117,8 @@
 .count {
   display: inline-block;
   font-size: 11px;
-  background: #243453;
-  color: var(--blue);
+  background: var(--color-surface-raised);
+  color: var(--color-accent);
   border-radius: 4px;
   padding: 2px 5px;
   margin-left: 4px;
@@ -126,27 +126,27 @@
 .selected {
   margin-top: 23px;
   padding-top: 20px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
 }
 .selected > strong {
   font-size: 21px;
-  color: var(--heading);
+  color: var(--color-heading);
   font-weight: 600;
   letter-spacing: -0.5px;
   margin: 9px 0 6px;
   overflow-wrap: anywhere;
 }
-.selected > span:not(.label) {
+.selected > span:not(.selectedLabel) {
   font-size: 13px;
-  color: #aab9d5;
+  color: var(--color-text-subtle);
 }
 .selected p,
 .hint {
   font-size: 13px;
   line-height: 1.7;
-  color: var(--muted);
+  color: var(--color-text-muted);
 }
 .hint {
   margin: 20px 0 0;
@@ -156,58 +156,34 @@
     padding: 19px;
   }
 }
-@media (max-width: 700px) {
-  .root {
-    padding: 18px;
-  }
-  .heading {
-    margin-bottom: 15px;
-  }
-  .selected {
-    margin-top: 15px;
-    padding-top: 14px;
-  }
-  .selected > .label {
-    display: none;
-  }
-  .refinements {
-    margin-top: 11px;
-  }
-}
 .input,
 .select {
   width: 100%;
   min-width: 0;
-  border: 1px solid #39465c;
-  color: #e1e8f6;
-  background: var(--surface);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text);
+  background: var(--color-surface);
   border-radius: 8px;
   padding: 11px;
   font-size: 14px;
   min-height: 44px;
-  caret-color: #a4c0ff;
+  caret-color: var(--color-focus);
 }
 .input::placeholder {
-  color: #a1adc3;
+  color: var(--color-text-muted);
 }
 .select option {
-  background: var(--surface);
-  color: #e3e9f4;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 .input:-webkit-autofill {
-  -webkit-text-fill-color: #e3e9f4;
-  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
-}
-.label {
-  font-size: 0.75rem;
-  letter-spacing: 1.5px;
-  color: #a2b1cd;
-  font-weight: 500;
+  -webkit-text-fill-color: var(--color-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
 }
 .reset {
   background: none;
   border: 0;
-  color: var(--blue);
+  color: var(--color-accent);
   text-align: left;
   font-size: 13px;
   padding: 8px 0;
@@ -224,6 +200,22 @@
   border: 0;
 }
 @media (max-width: 700px) {
+  .root {
+    padding: 18px;
+  }
+  .heading {
+    margin-bottom: 15px;
+  }
+  .selected {
+    margin-top: 15px;
+    padding-top: 14px;
+  }
+  .selected > .selectedLabel {
+    display: none;
+  }
+  .refinements {
+    margin-top: 11px;
+  }
   .input {
     font-size: 1rem;
   }

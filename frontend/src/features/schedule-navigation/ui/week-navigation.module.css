@@ -3,14 +3,14 @@
   align-items: center;
   gap: 10px;
   font-size: 0.875rem;
-  color: var(--muted);
+  color: var(--color-text-muted);
   max-width: 100%;
 }
 .button {
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border);
   border-radius: 7px;
-  background: var(--raised);
-  color: var(--heading);
+  background: var(--color-surface-raised);
+  color: var(--color-heading);
   min-width: 40px;
   min-height: 40px;
   font-size: 23px;
@@ -18,7 +18,7 @@
 }
 .label {
   font-size: 14px;
-  color: var(--heading);
+  color: var(--color-heading);
   text-align: center;
   min-width: 0;
   line-height: 1.6;

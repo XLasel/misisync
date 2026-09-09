@@ -1,8 +1,12 @@
 'use client'
-import s from './schedule-dashboard.module.css'
+
+import { GroupPicker } from '@/features/group-selection/ui/group-picker'
+
 import { useCalendar } from '../model/use-calendar'
+
 import { SchedulePanel } from './schedule-panel'
-import { GroupPicker } from '../../../features/group-selection/ui/group-picker'
+
+import s from './schedule-dashboard.module.css'
 
 export function ScheduleDashboard({ today }: { today: string }) {
   const state = useCalendar(today)

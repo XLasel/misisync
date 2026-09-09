@@ -5,9 +5,9 @@
   flex-wrap: wrap;
   gap: 12px 20px;
   padding: 16px var(--panel-gutter);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-border);
   font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--color-text-muted);
 }
 .details {
   flex: 1 1 220px;
@@ -19,7 +19,7 @@
 .details summary > span {
   display: block;
   padding-left: 14px;
-  color: #8797b2;
+  color: var(--color-text-disabled);
   overflow-wrap: anywhere;
 }
 .details p {
@@ -27,18 +27,7 @@
   margin: 10px 0 0;
   line-height: 1.7;
 }
-.button {
+.action {
   flex: 0 0 auto;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  color: var(--muted);
-  background: transparent;
-  padding: 9px 12px;
-  min-height: 40px;
-  font-size: 0.75rem;
   max-width: 100%;
-}
-.button:hover:not(:disabled) {
-  background: var(--raised);
-  color: var(--heading);
 }

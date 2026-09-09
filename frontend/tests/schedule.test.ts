@@ -1,11 +1,12 @@
 /// <reference types="node" />
-import test from 'node:test'
 import assert from 'node:assert/strict'
-import { scheduleCards } from '../src/entities/schedule/model/selectors'
-import { normalizeGroupSearch } from '../src/shared/lib/search'
-import { addDays, mondayOf } from '../src/shared/lib/calendar'
+import test from 'node:test'
+
 import { createScheduleApi } from '../src/entities/schedule/api/schedule-api'
+import { scheduleCards } from '../src/entities/schedule/model/selectors'
 import type { Lesson } from '../src/entities/schedule/model/types'
+import { addDays, mondayOf } from '../src/shared/lib/calendar'
+import { normalizeGroupSearch } from '../src/shared/lib/search'
 
 const base: Lesson = {
   id: 'common',

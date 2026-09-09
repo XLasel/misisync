@@ -1,12 +1,26 @@
 .root {
-  margin-top: 23px;
   border: 0;
   border-radius: 8px;
   padding: 11px 17px;
-  color: #f8fbff;
-  background: var(--action);
+  color: var(--color-on-action);
+  background: var(--color-action);
   font-size: 14px;
 }
-.root:hover {
-  background: #386aef;
+.root:not(.secondary):hover:not(:disabled) {
+  background: var(--color-action-hover);
+}
+
+.secondary {
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  min-height: 40px;
+  color: var(--color-text-muted);
+  background: transparent;
+  font-size: 0.75rem;
+}
+
+.secondary:hover:not(:disabled) {
+  color: var(--color-heading);
+  background: var(--color-surface-raised);
 }

@@ -1,5 +1,9 @@
-import s from './lesson-card.module.css'
+import { classNames } from '@/shared/lib/class-names'
+
 import type { Lesson } from '../model/types'
+
+import s from './lesson-card.module.css'
+
 const kind = (lesson: Lesson) =>
   /лек/i.test(lesson.lesson_type)
     ? 'lecture'
@@ -25,7 +29,7 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
         <strong>{lesson.start_time || '—'}</strong>
         <span>{lesson.end_time || 'Время не указано'}</span>
       </div>
-      <article className={`${s.card} ${s[type]}`}>
+      <article className={classNames(s.card, type !== 'other' && s[type])}>
         <div className={s.header}>
           <span className={s.type}>
             <i />

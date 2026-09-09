@@ -1,5 +1,9 @@
-import s from './schedule-freshness.module.css'
 import { useId } from 'react'
+
+import { Button } from '@/shared/ui/button'
+
+import s from './schedule-freshness.module.css'
+
 export function ScheduleFreshness({
   fetchedAt,
   stale,
@@ -36,9 +40,15 @@ export function ScheduleFreshness({
           По умолчанию кэш действует 15 минут.
         </p>
       </details>
-      <button className={s.button} disabled={pending} aria-describedby={id} onClick={onRefresh}>
+      <Button
+        className={s.action}
+        variant="secondary"
+        disabled={pending}
+        aria-describedby={id}
+        onClick={onRefresh}
+      >
         <span aria-hidden="true">↻</span> {pending ? 'Загрузка…' : 'Обновить'}
-      </button>
+      </Button>
     </div>
   )
 }

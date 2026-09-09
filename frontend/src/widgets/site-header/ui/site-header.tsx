@@ -1,6 +1,8 @@
-import s from './site-header.module.css'
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
+
+import s from './site-header.module.css'
+
 export function SiteHeader({ sourceUrl }: { sourceUrl: string }) {
   return (
     <header className={s.root}>

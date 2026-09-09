@@ -1,4 +1,5 @@
 import s from './subgroup-filter.module.css'
+
 export function SubgroupFilter({
   values,
   selected,

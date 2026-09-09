@@ -1,8 +1,12 @@
 'use client'
-import s from './group-picker.module.css'
+
 import { useId, useRef, useState } from 'react'
-import type { Group } from '../../../entities/schedule/model/types'
-import { normalizeGroupSearch } from '../../../shared/lib/search'
+
+import type { Group } from '@/entities/schedule/model/types'
+import { normalizeGroupSearch } from '@/shared/lib/search'
+import { Overline } from '@/shared/ui/overline'
+
+import s from './group-picker.module.css'
 
 type Props = {
   groups: Group[]
@@ -196,7 +200,7 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
       )}
       {selected ? (
         <div className={s.selected}>
-          <span className={s.label}>ВЫБРАННАЯ ГРУППА</span>
+          <Overline className={s.selectedLabel}>ВЫБРАННАЯ ГРУППА</Overline>
           <strong>{selected.name}</strong>
           <span>{selected.education_level}</span>
           {selected.institutes.map((name) => (

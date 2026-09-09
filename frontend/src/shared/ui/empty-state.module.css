@@ -13,21 +13,26 @@
   font-size: 34px;
   width: 70px;
   height: 70px;
-  border: 1px solid #3b4d6c;
-  background: #1a2942;
-  color: var(--blue);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-info);
+  color: var(--color-accent);
   border-radius: 18px;
 }
-.root h3 {
+.title {
   font-size: 22px;
   font-weight: 500;
   margin: 18px 0 0;
-  color: var(--heading);
+  color: var(--color-heading);
 }
 .root p {
   max-width: 350px;
   font-size: 14px;
   line-height: 1.8;
-  color: var(--muted);
+  color: var(--color-text-muted);
   margin: 12px 0 0;
+}
+
+.root > button,
+.root > a {
+  margin-top: 23px;
 }

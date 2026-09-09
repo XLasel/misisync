@@ -1,14 +1,10 @@
-import s from './not-found.module.css'
-import Link from 'next/link'
+import { ButtonLink } from '@/shared/ui/button'
+import { StatusPage } from '@/shared/ui/status-page'
+
 export default function NotFound() {
   return (
-    <main className={s.root}>
-      <div className={s.content}>
-        <h1 className={s.title}>Страница не найдена</h1>
-        <Link className={s.button} href="/">
-          К расписанию
-        </Link>
-      </div>
-    </main>
+    <StatusPage title="Страница не найдена">
+      <ButtonLink href="/">К расписанию</ButtonLink>
+    </StatusPage>
   )
 }

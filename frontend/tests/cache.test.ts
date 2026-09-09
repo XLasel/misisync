@@ -1,6 +1,7 @@
 /// <reference types="node" />
-import test from 'node:test'
 import assert from 'node:assert/strict'
+import test from 'node:test'
+
 import { ScheduleRateLimiter } from '../src/shared/server/rate-limit'
 
 test('each visitor has a separate quota, which recovers as requests expire', () => {

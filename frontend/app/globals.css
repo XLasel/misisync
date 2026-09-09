@@ -1,18 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&display=swap');
 :root {
   font-family: 'Golos Text', system-ui, sans-serif;
-  color: #e3e9f4;
-  background: #0c1018;
+  color: var(--color-text);
+  background: var(--color-background);
   font-synthesis: none;
   font-size: 16px;
-  color-scheme: dark;
-  --surface: #131b28;
-  --raised: #22324b;
-  --action: #2d5cdb;
-  --blue: #8daaff;
-  --heading: #eef3ff;
-  --muted: #a5afc3;
-  --line: #2a3445;
 }
 * {
   box-sizing: border-box;
@@ -49,12 +41,12 @@ a:focus-visible,
 select:focus-visible,
 input:focus-visible,
 summary:focus-visible {
-  outline: 3px solid #97b4ff;
+  outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
 ::selection {
-  background: #365ba0;
-  color: #fff;
+  background: var(--color-selection);
+  color: var(--color-selection-text);
 }
 @media (prefers-reduced-motion: no-preference) {
   button {

@@ -1,12 +1,15 @@
 import './setup-dom'
-import { afterEach, test } from 'node:test'
+
 import assert from 'node:assert/strict'
+import { afterEach, test } from 'node:test'
+
 import { act, cleanup, render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { GroupPicker } from '../src/features/group-selection/ui/group-picker'
-import { SchedulePanel } from '../src/widgets/schedule/ui/schedule-panel'
-import { useCalendar } from '../src/widgets/schedule/model/use-calendar'
+
 import type { Group, Schedule } from '../src/entities/schedule/model/types'
+import { GroupPicker } from '../src/features/group-selection/ui/group-picker'
+import { useCalendar } from '../src/widgets/schedule/model/use-calendar'
+import { SchedulePanel } from '../src/widgets/schedule/ui/schedule-panel'
 
 const groups: Group[] = [
   {
