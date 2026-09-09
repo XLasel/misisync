@@ -29,9 +29,11 @@ export function ScheduleFreshness({
     <div className={s.root}>
       <details className={s.details}>
         <summary>
-          Данные расписания{' '}
-          <span>
-            {label ? `${label} МСК${stale ? ' · сохранённая версия' : ''}` : 'Ещё не получены'}
+          <span className={s.summary}>
+            <span className={s.title}>Данные расписания</span>
+            <span className={s.meta}>
+              {label ? `${label} МСК${stale ? ' · сохранённая версия' : ''}` : 'Ещё не получены'}
+            </span>
           </span>
         </summary>
         <p id={id}>

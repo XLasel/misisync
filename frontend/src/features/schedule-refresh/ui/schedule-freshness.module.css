@@ -14,11 +14,20 @@
   min-width: 0;
 }
 .details summary {
-  line-height: 1.8;
+  line-height: 1.5;
+  cursor: pointer;
 }
-.details summary > span {
-  display: block;
-  padding-left: 14px;
+.summary {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  vertical-align: top;
+  min-width: 0;
+}
+.title {
+  color: var(--color-text-muted);
+}
+.meta {
   color: var(--color-text-disabled);
   overflow-wrap: anywhere;
 }
