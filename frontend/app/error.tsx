@@ -1,7 +1,6 @@
 'use client'
 
-import { Button } from '@/shared/ui/button'
-import { StatusPage } from '@/shared/ui/status-page'
+import { Button, StatusPage } from '@/shared/ui'
 
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (

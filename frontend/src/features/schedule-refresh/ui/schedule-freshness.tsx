@@ -1,6 +1,6 @@
 import { useId } from 'react'
 
-import { Button } from '@/shared/ui/button'
+import { Button } from '@/shared/ui'
 
 import s from './schedule-freshness.module.css'
 

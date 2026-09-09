@@ -6,9 +6,7 @@ import { ScheduleFreshness } from '@/features/schedule-refresh/ui/schedule-fresh
 import { SubgroupFilter } from '@/features/subgroup-filter/ui/subgroup-filter'
 import { dateLabel, days, shortDays } from '@/shared/lib/calendar'
 import { classNames } from '@/shared/lib/class-names'
-import { Button } from '@/shared/ui/button'
-import { EmptyState } from '@/shared/ui/empty-state'
-import { Overline } from '@/shared/ui/overline'
+import { Button, EmptyState, Overline } from '@/shared/ui'
 
 import s from './schedule-panel.module.css'
 

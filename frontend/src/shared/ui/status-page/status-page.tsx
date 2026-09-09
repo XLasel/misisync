@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { EmptyState } from './empty-state'
+import { EmptyState } from '../empty-state'
 
 import s from './status-page.module.css'
 

@@ -4,7 +4,7 @@ import { useId, useRef, useState } from 'react'
 
 import type { Group } from '@/entities/schedule/model/types'
 import { normalizeGroupSearch } from '@/shared/lib/search'
-import { Overline } from '@/shared/ui/overline'
+import { Overline } from '@/shared/ui'
 
 import s from './group-picker.module.css'
 

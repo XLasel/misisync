@@ -1,5 +1,4 @@
-import { ButtonLink } from '@/shared/ui/button'
-import { StatusPage } from '@/shared/ui/status-page'
+import { ButtonLink, StatusPage } from '@/shared/ui'
 
 export default function NotFound() {
   return (
