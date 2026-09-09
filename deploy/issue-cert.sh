@@ -23,9 +23,9 @@ docker run --rm \
   -d "${DOMAIN}" --email "${EMAIL}" --agree-tos --no-eff-email --non-interactive
 
 echo "Enabling TLS nginx template..."
-cp deploy/nginx/templates/ssl.conf.template deploy/nginx/templates/default.conf.template
+cp deploy/nginx/ssl.conf.tls deploy/nginx/templates/default.conf.template
 
-docker compose -f compose.yaml -f compose.prod.yaml up -d nginx
+docker compose -f compose.yaml -f compose.prod.yaml up -d --force-recreate nginx
 
 echo "HTTPS enabled for https://${DOMAIN}/"
 echo "Renew later with: ./deploy/issue-cert.sh  (certbot renew is safe to re-run)"
