@@ -13,6 +13,7 @@ export type Catalog = { revision: string | null; groups: Group[] }
 export type Schedule = {
   revision: string | null; group: Group | null; source: SourceInfo | null; coverage: Coverage | null;
   window: Window; available_dates: string[]; lessons: Lesson[]; warnings: string[];
+  fetched_at: string | null; stale: boolean;
 }
 export type SyncStatus = {
   revision: string | null; source: SourceInfo | null; coverage: Coverage | null;

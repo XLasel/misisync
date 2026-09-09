@@ -1,31 +1,46 @@
-"""On-demand edu.misis.ru access: catalog + per-week schedule with short in-memory TTL."""
+"""On-demand calendar with bounded caching, single-flight loads and stale-on-error fallback."""
 import asyncio
 import logging
 import time
 import uuid
+from collections import OrderedDict
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
-from ...domain import Catalog, Coverage, Schedule, Status, Window, merge_duplicates
+from ...domain import Catalog, Coverage, Lesson, Schedule, Status, Window, merge_duplicates
+from ...ports import SourceBusy
 from .source import EduApiSource
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class WeekEntry:
+    lessons: Optional[list[Lesson]]
+    fetched_at: Optional[str]
+    expires: float
+    stale_until: float
+    retry_at: float = 0
+    error: bool = False
+
+
+def utc_now():
+    return datetime.now(timezone.utc).isoformat()
+
+
 class EduLiveService:
-    def __init__(self, settings, transport_factory):
-        self.settings = settings
-        self.transport_factory = transport_factory
+    def __init__(self, settings, transport_factory, *, clock=time.monotonic):
+        self.settings, self.transport_factory, self.clock = settings, transport_factory, clock
         self.source = EduApiSource(settings)
         self._catalog_lock = None
-        self._catalog_expires = 0.0
-        self._catalog_revision = None
-        self._catalog_fetched_at = None
+        self._catalog_expires = self._catalog_retry_at = self._catalog_stale_until = 0.0
+        self._catalog_revision = self._catalog_fetched_at = self._catalog_attempted_at = None
         self._catalog_error = None
-        self._upstream = {}
-        self._groups = []
-        self._week_cache = {}
-        self._week_locks = {}
-        self._week_meta_lock = None
+        self._upstream, self._groups = {}, []
+        self._week_cache = OrderedDict()
+        self._week_flights = {}
+        self._closed = False
 
     @property
     def info(self):
@@ -35,98 +50,139 @@ class EduLiveService:
         try:
             await self.catalog()
         except Exception:
-            logger.exception('Initial edu catalog warm-up failed; will retry on first request')
+            logger.warning('Initial catalog unavailable; later requests will retry after backoff')
+
+    async def aclose(self):
+        self._closed = True
+        tasks = list(self._week_flights.values())
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        self._week_flights.clear()
 
     async def catalog(self) -> Catalog:
         await self._ensure_catalog()
         return Catalog(revision=self._catalog_revision, groups=list(self._groups))
 
     async def status(self) -> Status:
-        try:
-            await self._ensure_catalog()
-        except Exception:
-            pass
-        return Status(source=self.info, coverage=None, revision=self._catalog_revision,
-                      last_success=self._catalog_fetched_at, last_attempt=self._catalog_fetched_at,
-                      last_error=self._catalog_error, warnings=[],
-                      group_count=len(self._groups), lesson_count=0, configured_source=self.info.id)
+        # Status is observational: polling it must not initiate upstream work.
+        return Status(source=self.info, revision=self._catalog_revision,
+                      last_success=self._catalog_fetched_at, last_attempt=self._catalog_attempted_at,
+                      last_error=self._catalog_error, group_count=len(self._groups),
+                      lesson_count=sum(len(e.lessons or []) for e in self._week_cache.values()),
+                      configured_source=self.info.id, updating=bool(self._week_flights))
 
     async def schedule(self, group_id: str, window: Window) -> Schedule:
         await self._ensure_catalog()
         edu_group = self._upstream.get(group_id)
+        revision = self._catalog_revision
         if edu_group is None:
-            return Schedule(revision=self._catalog_revision, group=None, source=self.info, coverage=None,
+            return Schedule(revision=revision, group=None, source=self.info, coverage=None,
                             window=window, available_dates=[], lessons=[], warnings=[])
         coverage = Coverage(start=window.start, end=window.end, weekdays=list(range(6)))
-        lessons = []
+        lessons, entries = [], []
         for monday in self.source.week_mondays(window):
-            lessons.extend(await self._week_lessons(edu_group, monday, window))
-        lessons = merge_duplicates(lessons)
-        group = self.source.domain_group(edu_group, lessons)
-        return Schedule(revision=self._catalog_revision, group=group, source=self.info, coverage=coverage,
-                        window=window, available_dates=[d for d in window.dates() if coverage.includes(d)],
-                        lessons=lessons, warnings=[])
-
-    def _lock(self, attr):
-        if getattr(self, attr) is None:
-            setattr(self, attr, asyncio.Lock())
-        return getattr(self, attr)
+            if monday + timedelta(days=5) < window.start:
+                continue  # A Sunday-only request has no covered dates.
+            entry = await self._week_entry(edu_group, monday)
+            entries.append(entry)
+            lessons.extend(l for l in entry.lessons or [] if window.start <= l.date <= window.end)
+        stale = any(e.error for e in entries)
+        warnings = []
+        if stale:
+            warnings.append('Не удалось обновить расписание университета. Показана последняя полученная версия из кэша.')
+        if self._catalog_error:
+            warnings.append('Список групп временно доступен из кэша: университет не ответил на обновление.')
+        timestamps = [e.fetched_at for e in entries if e.fetched_at]
+        return Schedule(revision=revision, group=self.source.domain_group(edu_group, lessons),
+                        source=self.info, coverage=coverage, window=window,
+                        available_dates=[d for d in window.dates() if coverage.includes(d)],
+                        lessons=merge_duplicates(lessons), warnings=warnings,
+                        fetched_at=min(timestamps) if timestamps else None, stale=stale)
 
     async def _ensure_catalog(self):
-        if self._groups and time.monotonic() < self._catalog_expires:
-            return
-        async with self._lock('_catalog_lock'):
-            if self._groups and time.monotonic() < self._catalog_expires:
+        if self._catalog_lock is None:
+            self._catalog_lock = asyncio.Lock()
+        async with self._catalog_lock:
+            now = self.clock()
+            if self._groups and now < self._catalog_expires:
                 return
+            if now < self._catalog_retry_at:
+                if self._groups and now < self._catalog_stale_until:
+                    return
+                raise ValueError('Catalog temporarily unavailable')
+            self._catalog_attempted_at = utc_now()
             try:
                 async with self.transport_factory() as transport:
                     upstream = await self.source.load_catalog(transport)
                 self._upstream = {g.name: g for g in upstream}
                 self._groups = [self.source.domain_group(g) for g in upstream]
                 self._catalog_revision = uuid.uuid4().hex
-                self._catalog_fetched_at = datetime.now(timezone.utc).isoformat()
-                self._catalog_expires = time.monotonic() + self.settings.edu_catalog_ttl_seconds
+                self._catalog_fetched_at = utc_now()
+                self._catalog_expires = self.clock() + self.settings.edu_catalog_ttl_seconds
+                self._catalog_stale_until = self._catalog_expires + self.settings.edu_stale_if_error_seconds
                 self._catalog_error = None
+                self._catalog_retry_at = 0
             except Exception:
-                self._catalog_error = 'Не удалось загрузить список групп из электронного расписания.'
+                self._catalog_error = 'Не удалось обновить список групп университета.'
+                self._catalog_retry_at = self.clock() + self.settings.edu_retry_backoff_seconds
                 logger.exception('edu catalog refresh failed')
-                if self._groups:
+                if self._groups and self.clock() < self._catalog_stale_until:
                     return
                 raise
 
-    async def _week_lock_for(self, key):
-        async with self._lock('_week_meta_lock'):
-            lock = self._week_locks.get(key)
-            if lock is None:
-                lock = asyncio.Lock()
-                self._week_locks[key] = lock
-            return lock
-
-    def _purge_week_cache(self, now):
-        expired = [key for key, (expires, _) in self._week_cache.items() if expires <= now]
-        for key in expired:
-            self._week_cache.pop(key, None)
-            self._week_locks.pop(key, None)
-        limit = self.settings.edu_schedule_cache_max_entries
-        while len(self._week_cache) >= limit:
-            oldest = min(self._week_cache, key=lambda item: self._week_cache[item][0])
-            self._week_cache.pop(oldest, None)
-            self._week_locks.pop(oldest, None)
-
-    async def _week_lessons(self, edu_group, monday, window: Window):
-        key = (edu_group.name, monday.isoformat())
-        now = time.monotonic()
+    async def _week_entry(self, group, monday):
+        if self._closed:
+            raise SourceBusy('Service shutting down')
+        # Names can survive an upstream ID change. Cache by the actual upstream identity.
+        key = (group.id, monday.isoformat())
+        now = self.clock()
         cached = self._week_cache.get(key)
-        if cached and now < cached[0]:
-            return [lesson for lesson in cached[1] if window.start <= lesson.date <= window.end]
-        async with await self._week_lock_for(key):
-            now = time.monotonic()
-            cached = self._week_cache.get(key)
-            if cached and now < cached[0]:
-                return [lesson for lesson in cached[1] if window.start <= lesson.date <= window.end]
+        if cached:
+            self._week_cache.move_to_end(key)
+            if now < cached.expires or now < cached.retry_at:
+                if cached.lessons is not None and (not cached.error or now < cached.stale_until):
+                    return cached
+                raise ValueError('Schedule temporarily unavailable')
+        task = self._week_flights.get(key)
+        if task is None:
+            if len(self._week_flights) >= self.settings.edu_max_pending_requests:
+                raise SourceBusy('Too many distinct upstream requests')
+            task = asyncio.create_task(self._load_week(key, group, monday, cached))
+            self._week_flights[key] = task
+            def finished(done):
+                if self._week_flights.get(key) is done:
+                    self._week_flights.pop(key, None)
+                if not done.cancelled():
+                    done.exception()  # Observe failures even if all requesters disconnected.
+            task.add_done_callback(finished)
+        # Cancelling one browser request must not cancel work shared with other visitors.
+        return await asyncio.shield(task)
+
+    async def _load_week(self, key, group, monday, previous):
+        try:
             full = Window(start=monday, end=monday + timedelta(days=5))
             async with self.transport_factory() as transport:
-                lessons = await self.source.fetch_week(transport, edu_group, monday, full)
-            self._purge_week_cache(now)
-            self._week_cache[key] = (now + self.settings.edu_schedule_ttl_seconds, lessons)
-            return [lesson for lesson in lessons if window.start <= lesson.date <= window.end]
+                lessons = await self.source.fetch_week(transport, group, monday, full)
+            now = self.clock()  # TTL starts after the response, not before the network wait.
+            expires = now + self.settings.edu_schedule_ttl_seconds
+            entry = WeekEntry(lessons, utc_now(), expires, expires + self.settings.edu_stale_if_error_seconds)
+        except Exception:
+            logger.exception('edu week refresh failed')
+            now = self.clock()
+            usable = previous is not None and previous.lessons is not None and now < previous.stale_until
+            entry = WeekEntry(previous.lessons if usable else None, previous.fetched_at if usable else None,
+                              0, previous.stale_until if usable else 0,
+                              retry_at=now + self.settings.edu_retry_backoff_seconds, error=True)
+            self._store_week(key, entry)
+            if not usable:
+                raise
+            return entry
+        self._store_week(key, entry)
+        return entry
+
+    def _store_week(self, key, entry):
+        self._week_cache[key] = entry
+        self._week_cache.move_to_end(key)
+        while len(self._week_cache) > self.settings.edu_schedule_cache_max_entries:
+            self._week_cache.popitem(last=False)

@@ -4,6 +4,10 @@ from typing import Optional, Protocol
 from .domain import Catalog, Schedule, Snapshot, SourceInfo, Status, Window
 
 
+class SourceBusy(Exception):
+    """The provider cannot accept more work right now."""
+
+
 @dataclass(frozen=True)
 class Document:
     url: str

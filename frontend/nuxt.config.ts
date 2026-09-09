@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   srcDir: '.',
   devtools: { enabled: false },
   css: ['~/assets/main.css'],
-  runtimeConfig: { apiBase: 'http://127.0.0.1:8000' },
+  runtimeConfig: { apiBase: 'http://127.0.0.1:8000', scheduleRateLimitPerMinute: 60, trustProxy: false },
   routeRules: {
     '/**': {
       headers: {

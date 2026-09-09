@@ -1,7 +1,5 @@
 import os
-from collections import defaultdict, deque
 from dataclasses import dataclass
-from time import monotonic
 
 
 @dataclass(frozen=True)
@@ -15,15 +13,20 @@ class Settings:
     edu_catalog_ttl_seconds: int = 3600
     edu_schedule_ttl_seconds: int = 900
     edu_schedule_cache_max_entries: int = 256
-    schedule_rate_limit_per_minute: int = 60
+    edu_stale_if_error_seconds: int = 3600
+    edu_retry_backoff_seconds: int = 30
+    edu_max_pending_requests: int = 64
+    edu_max_concurrent_requests: int = 4
 
     def __post_init__(self):
         if self.request_timeout_seconds < 1 or self.max_download_bytes < 1024:
             raise ValueError('Invalid timeout or download limit')
         if self.edu_request_delay_seconds < 0 or self.edu_catalog_ttl_seconds < 0 or self.edu_schedule_ttl_seconds < 0:
             raise ValueError('Invalid edu request delay or cache TTL')
-        if self.edu_schedule_cache_max_entries < 1 or self.schedule_rate_limit_per_minute < 1:
-            raise ValueError('Invalid cache size or rate limit')
+        if self.edu_schedule_cache_max_entries < 1 or self.edu_max_pending_requests < 1 or self.edu_max_concurrent_requests < 1:
+            raise ValueError('Invalid cache size or concurrency limit')
+        if self.edu_stale_if_error_seconds < 0 or self.edu_retry_backoff_seconds < 1:
+            raise ValueError('Invalid stale allowance or retry backoff')
         from urllib.parse import urlsplit
         parts = urlsplit(self.edu_api_url)
         if parts.scheme not in ('https', 'http') or not parts.hostname:
@@ -38,27 +41,11 @@ class Settings:
             'edu_catalog_ttl_seconds': int,
             'edu_schedule_ttl_seconds': int,
             'edu_schedule_cache_max_entries': int,
-            'schedule_rate_limit_per_minute': int,
+            'edu_stale_if_error_seconds': int,
+            'edu_retry_backoff_seconds': int,
+            'edu_max_pending_requests': int,
+            'edu_max_concurrent_requests': int,
             'edu_groups': lambda v: tuple(x.strip() for x in v.split(',') if x.strip()),
         }
         return cls(**{key: converters.get(key, str)(os.environ[key.upper()])
                       for key in cls.__dataclass_fields__ if key.upper() in os.environ})
-
-
-class SlidingWindowRateLimiter:
-    """In-memory fixed-window limiter for a single process."""
-
-    def __init__(self, limit: int, window_seconds: float = 60.0):
-        self.limit = limit
-        self.window = window_seconds
-        self._hits = defaultdict(deque)
-
-    def allow(self, key: str) -> bool:
-        now = monotonic()
-        bucket = self._hits[key]
-        while bucket and bucket[0] <= now - self.window:
-            bucket.popleft()
-        if len(bucket) >= self.limit:
-            return False
-        bucket.append(now)
-        return True

@@ -149,6 +149,8 @@ class Catalog(Model):
 
 
 class Schedule(Model):
+    fetched_at: Optional[str] = None
+    stale: bool = False
     revision: Optional[str]
     group: Optional[Group]
     source: Optional[SourceInfo]

@@ -31,6 +31,9 @@ const subgroupLabel = (lesson: Lesson) => {
 }
 const dateLabel = (value: string) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`))
 const calendarLabel = computed(() => `${dateLabel(weekStart.value)} — ${dateLabel(weekEnd.value)}`)
+const fetchedLabel = computed(() => schedule.value?.fetched_at ? new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow',
+}).format(new Date(schedule.value.fetched_at)) : '')
 const dayAvailable = computed(() => schedule.value?.available_dates.includes(weekDates.value[weekday.value]!) || false)
 const sourceUrl = computed(() => schedule.value?.source?.url || 'https://edu.misis.ru/schedule?filial=MOSCOW')
 function selectGroup(value: string) { group.value = value; query.value = ''; pickerOpen.value = false }
@@ -41,7 +44,7 @@ function moveOption(direction: number) {
   nextTick(() => document.getElementById(`group-option-${activeOption.value}`)?.scrollIntoView({ block: 'nearest' }))
 }
 function chooseActive() {
-  if (pickerOpen.value && options.value[activeOption.value]) selectGroup(options.value[activeOption.value]!.name)
+  if (pickerOpen.value && options.value[activeOption.value]) selectGroup(options.value[activeOption.value]!.id)
 }
 function closePicker(event: FocusEvent) {
   if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) pickerOpen.value = false
@@ -127,7 +130,9 @@ watch(catalog, values => {
           </div>
           <nav class="day-tabs" aria-label="Дни недели"><button v-for="(day, i) in days" :key="day" :aria-label="day" :aria-pressed="weekday === i" :class="{ active: weekday === i }" @click="weekday = i"><span>{{ shortDays[i] }}</span><span class="day-count">{{ group && schedule?.available_dates.includes(weekDates[i]!) ? cards.filter(l => l.date === weekDates[i]).length : '—' }}</span></button></nav>
           <div class="day-heading"><h3>{{ days[weekday] }} <small>{{ dateLabel(weekDates[weekday]!) }}</small></h3><span>{{ group && dayAvailable && loading !== 'pending' ? `Занятий: ${lessons.length}` : 'Время московское' }}</span></div>
-          <p v-if="subgroup !== 'all' && group" class="filter-note">Подгруппа {{ subgroup }} + общие занятия. Записи без уточнения подгруппы тоже показаны.</p>
+          <div v-if="group" class="freshness"><span v-if="fetchedLabel">Получено {{ fetchedLabel }} МСК{{ schedule?.stale ? ' · из кэша при сбое' : '' }}</span><button class="text-button" :disabled="loading === 'pending'" @click="reload">{{ loading === 'pending' ? 'Загружаем…' : 'Проверить' }}</button></div>
+          <p v-for="warning in schedule?.warnings || []" :key="warning" class="data-notice" role="status">{{ warning }}</p>
+          <p v-if="subgroup !== 'all' && group" class="filter-note">Подгруппа {{ subgroup }} и занятия без уточнения подгруппы.</p>
           <div v-if="catalogError || (group && scheduleError)" class="empty-state" role="alert"><span class="empty-symbol">↻</span><h3>Не удалось получить расписание</h3><p>Проверь подключение и попробуй ещё раз.</p><button class="primary-button" @click="reload">Повторить</button></div>
           <div v-else-if="!group" class="empty-state"><span class="empty-symbol" aria-hidden="true">▦</span><h3>Какая у тебя группа?</h3><p>{{ catalog.length ? 'Найди её по названию. Мы покажем пары и запомним твой выбор.' : 'Список групп ещё загружается.' }}</p><button v-if="catalog.length" class="primary-button" @click="searchInput?.focus()">Найти группу <span aria-hidden="true">↗</span></button></div>
           <div v-else-if="loading === 'pending' && !schedule" class="empty-state" role="status"><span class="empty-symbol">⋯</span><h3>Загружаем занятия</h3></div>

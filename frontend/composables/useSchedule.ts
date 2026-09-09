@@ -1,5 +1,5 @@
 import { createScheduleApi } from '~/services/schedule-api'
-import { addDays, mondayOf, moscowToday } from '~/utils/schedule'
+import { addDays, mondayOf, moscowToday, matchesSchedule } from '~/utils/schedule'
 import type { Schedule } from '~/types/schedule'
 
 export function useSchedule() {
@@ -21,6 +21,8 @@ export function useSchedule() {
     controller?.abort()
     controller = new AbortController()
     scheduleError.value = null
+    const window = { start: weekStart.value, end: weekEnd.value }
+    if (!matchesSchedule(schedule.value, group.value, window)) schedule.value = null
     if (!group.value) {
       schedule.value = null
       loading.value = 'idle'
@@ -28,7 +30,7 @@ export function useSchedule() {
     }
     loading.value = 'pending'
     try {
-      const result = await api.schedule(group.value, { start: weekStart.value, end: weekEnd.value }, controller.signal)
+      const result = await api.schedule(group.value, window, controller.signal)
       if (current !== requestId) return
       schedule.value = result
       loading.value = 'success'
@@ -39,6 +41,7 @@ export function useSchedule() {
     }
   }
   watch([group, weekStart], refreshSchedule)
+  onUnmounted(() => { ++requestId; controller?.abort() })
   async function reload() {
     await refreshCatalog()
     await refreshSchedule()

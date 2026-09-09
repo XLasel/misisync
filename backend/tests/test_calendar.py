@@ -160,20 +160,19 @@ def test_live_edu_unknown_group_and_upstream_failure():
         assert client.get('/api/schedule', params={'group_id': GROUP, 'start': '2026-09-07', 'end': '2026-09-12'}).status_code == 502
 
 
-def test_schedule_rate_limit_returns_429():
-    settings = Settings(edu_groups=(GROUP,), edu_request_delay_seconds=0, schedule_rate_limit_per_minute=2)
-    transport = RpcTransport()
+def test_saturated_provider_returns_503_with_retry_after():
+    from app.ports import SourceBusy
 
-    @asynccontextmanager
-    async def factory():
-        yield transport
+    class BusyProvider:
+        async def schedule(self, *args):
+            raise SourceBusy()
 
-    app = create_app(settings, transport_factory=factory)
+    app = create_app(provider=BusyProvider())
     with TestClient(app) as client:
         params = {'group_id': GROUP, 'start': '2026-09-07', 'end': '2026-09-12'}
-        assert client.get('/api/schedule', params=params).status_code == 200
-        assert client.get('/api/schedule', params=params).status_code == 200
-        assert client.get('/api/schedule', params=params).status_code == 429
+        response = client.get('/api/schedule', params=params)
+        assert response.status_code == 503
+        assert response.headers['retry-after'] == '5'
 
 
 def test_week_cache_evicts_when_over_capacity():

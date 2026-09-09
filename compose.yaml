@@ -12,7 +12,10 @@ services:
       EDU_CATALOG_TTL_SECONDS: ${EDU_CATALOG_TTL_SECONDS:-3600}
       EDU_SCHEDULE_TTL_SECONDS: ${EDU_SCHEDULE_TTL_SECONDS:-900}
       EDU_SCHEDULE_CACHE_MAX_ENTRIES: ${EDU_SCHEDULE_CACHE_MAX_ENTRIES:-256}
-      SCHEDULE_RATE_LIMIT_PER_MINUTE: ${SCHEDULE_RATE_LIMIT_PER_MINUTE:-60}
+      EDU_STALE_IF_ERROR_SECONDS: ${EDU_STALE_IF_ERROR_SECONDS:-3600}
+      EDU_RETRY_BACKOFF_SECONDS: ${EDU_RETRY_BACKOFF_SECONDS:-30}
+      EDU_MAX_PENDING_REQUESTS: ${EDU_MAX_PENDING_REQUESTS:-64}
+      EDU_MAX_CONCURRENT_REQUESTS: ${EDU_MAX_CONCURRENT_REQUESTS:-4}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
       interval: 15s
@@ -24,6 +27,8 @@ services:
     restart: unless-stopped
     environment:
       NUXT_API_BASE: ${NUXT_API_BASE:-http://backend:8000}
+      NUXT_SCHEDULE_RATE_LIMIT_PER_MINUTE: ${NUXT_SCHEDULE_RATE_LIMIT_PER_MINUTE:-60}
+      NUXT_TRUST_PROXY: ${NUXT_TRUST_PROXY:-false}
     ports:
       - "${PORT:-3000}:3000"
     depends_on:

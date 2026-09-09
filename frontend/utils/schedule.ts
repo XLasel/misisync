@@ -1,4 +1,8 @@
-import type { Lesson } from '../types/schedule'
+import type { Lesson, Schedule, Window } from '../types/schedule'
+
+export function matchesSchedule(schedule: Schedule | null, group: string, window: Window): boolean {
+  return schedule?.group?.id === group && schedule.window.start === window.start && schedule.window.end === window.end
+}
 
 export function scheduleCards(rows: Lesson[], subgroup: string): Lesson[] {
   const cards = new Map<string, Lesson>()
