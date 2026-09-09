@@ -160,6 +160,41 @@ def test_live_edu_unknown_group_and_upstream_failure():
         assert client.get('/api/schedule', params={'group_id': GROUP, 'start': '2026-09-07', 'end': '2026-09-12'}).status_code == 502
 
 
+def test_schedule_rate_limit_returns_429():
+    settings = Settings(edu_groups=(GROUP,), edu_request_delay_seconds=0, schedule_rate_limit_per_minute=2)
+    transport = RpcTransport()
+
+    @asynccontextmanager
+    async def factory():
+        yield transport
+
+    app = create_app(settings, transport_factory=factory)
+    with TestClient(app) as client:
+        params = {'group_id': GROUP, 'start': '2026-09-07', 'end': '2026-09-12'}
+        assert client.get('/api/schedule', params=params).status_code == 200
+        assert client.get('/api/schedule', params=params).status_code == 200
+        assert client.get('/api/schedule', params=params).status_code == 429
+
+
+def test_week_cache_evicts_when_over_capacity():
+    settings = Settings(edu_groups=(GROUP,), edu_request_delay_seconds=0, edu_schedule_cache_max_entries=1,
+                        edu_schedule_ttl_seconds=60)
+    transport = RpcTransport()
+
+    @asynccontextmanager
+    async def factory():
+        yield transport
+
+    from app.sources.edu.live import EduLiveService
+    live = EduLiveService(settings, factory)
+    asyncio.run(live.schedule(GROUP, Window(start=date(2026, 9, 7), end=date(2026, 9, 12))))
+    assert len(live._week_cache) == 1
+    first_key = next(iter(live._week_cache))
+    asyncio.run(live.schedule(GROUP, Window(start=date(2026, 9, 14), end=date(2026, 9, 19))))
+    assert len(live._week_cache) == 1
+    assert first_key not in live._week_cache
+
+
 @pytest.mark.parametrize('failure', ['http', 'oversize', 'timeout'])
 def test_http_transport_failures(failure):
     def handler(request):

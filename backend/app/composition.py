@@ -2,13 +2,19 @@
 
 
 def build_transport_factory(settings):
+    """Reuse one HttpTransport for the process lifetime (connection pooling)."""
     from contextlib import asynccontextmanager
     from .transports.http import HttpTransport
 
+    state = {'transport': None}
+
     @asynccontextmanager
     async def factory():
-        async with HttpTransport(settings) as transport:
-            yield transport
+        if state['transport'] is None:
+            transport = HttpTransport(settings)
+            await transport.__aenter__()
+            state['transport'] = transport
+        yield state['transport']
     return factory
 
 

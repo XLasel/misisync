@@ -4,6 +4,17 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   css: ['~/assets/main.css'],
   runtimeConfig: { apiBase: 'http://127.0.0.1:8000' },
+  routeRules: {
+    '/**': {
+      headers: {
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+      },
+    },
+  },
   app: { head: {
     htmlAttrs: { lang: 'ru', style: 'color-scheme: dark; background-color: #0c1018' },
     title: 'Misisync — расписание МИСИС',

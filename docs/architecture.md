@@ -48,6 +48,6 @@ flowchart TD
 - `GET /api/status` — метаданные live-провайдера
 - `GET /api/health` — liveness
 
-Каталог: `getFillialInfo` + TTL. Расписание: `getSchedule` по запрошенным неделям + TTL. `EDU_GROUPS` фильтрует только имена в каталоге.
+Каталог: `getFillialInfo` + TTL. Расписание: `getSchedule` по запрошенным неделям + TTL, Bounded week-cache (`EDU_SCHEDULE_CACHE_MAX_ENTRIES`), rate limit на IP (`SCHEDULE_RATE_LIMIT_PER_MINUTE`). `EDU_GROUPS` фильтрует только имена в каталоге.
 
 Неизвестная группа: `group=null`, пустые даты. Воскресенье не входит в покрытие источника (пн–сб).

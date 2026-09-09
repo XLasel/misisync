@@ -22,6 +22,8 @@ docker compose up --build -d
 | `EDU_REQUEST_DELAY_SECONDS` | Пауза перед каждым RPC (по умолчанию 0.25) |
 | `EDU_CATALOG_TTL_SECONDS` | TTL кэша списка групп (3600) |
 | `EDU_SCHEDULE_TTL_SECONDS` | TTL кэша недели группы (900) |
+| `EDU_SCHEDULE_CACHE_MAX_ENTRIES` | Максимум недель в памяти (256) |
+| `SCHEDULE_RATE_LIMIT_PER_MINUTE` | Лимит `/api/schedule` на IP в минуту (60) |
 | `REQUEST_TIMEOUT_SECONDS`, `MAX_DOWNLOAD_BYTES` | Таймаут и лимит размера ответа |
 | `NUXT_API_BASE` | Адрес бэкенда для прокси Nuxt |
 | `PORT` | Порт фронтенда (3000) |

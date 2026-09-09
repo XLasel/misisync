@@ -20,9 +20,12 @@ export function useSchedule() {
     const current = ++requestId
     controller?.abort()
     controller = new AbortController()
-    schedule.value = null
     scheduleError.value = null
-    if (!group.value) { loading.value = 'idle'; return }
+    if (!group.value) {
+      schedule.value = null
+      loading.value = 'idle'
+      return
+    }
     loading.value = 'pending'
     try {
       const result = await api.schedule(group.value, { start: weekStart.value, end: weekEnd.value }, controller.signal)

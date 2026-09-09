@@ -3,10 +3,10 @@ import logging
 from contextlib import asynccontextmanager, suppress
 from datetime import date
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 
 from .composition import build_provider, build_transport_factory
-from .config import Settings
+from .config import Settings, SlidingWindowRateLimiter
 from .domain import Catalog, Schedule, Status, Window
 
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +16,7 @@ def create_app(settings=None, *, provider=None, transport_factory=None):
     config = settings or Settings.from_env()
     transport_factory = transport_factory or build_transport_factory(config)
     provider = provider or build_provider(config, transport_factory)
+    limiter = SlidingWindowRateLimiter(config.schedule_rate_limit_per_minute)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -48,10 +49,13 @@ def create_app(settings=None, *, provider=None, transport_factory=None):
             raise HTTPException(502, 'Не удалось загрузить список групп из электронного расписания.') from None
 
     @app.get('/api/schedule', response_model=Schedule)
-    async def schedule(group_id: str = Query(min_length=1, max_length=100),
+    async def schedule(request: Request, group_id: str = Query(min_length=1, max_length=100),
                        start: date = Query(), end: date = Query()):
         if end < start or (end - start).days > 90:
             raise HTTPException(422, 'Requested date range must be ordered and at most 91 days')
+        client = request.client.host if request.client else 'unknown'
+        if not limiter.allow(client):
+            raise HTTPException(429, 'Слишком много запросов расписания. Подожди минуту и попробуй снова.')
         try:
             return await provider.schedule(group_id, Window(start=start, end=end))
         except Exception:

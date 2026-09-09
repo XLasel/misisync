@@ -130,10 +130,10 @@ watch(catalog, values => {
           <p v-if="subgroup !== 'all' && group" class="filter-note">Подгруппа {{ subgroup }} + общие занятия. Записи без уточнения подгруппы тоже показаны.</p>
           <div v-if="catalogError || (group && scheduleError)" class="empty-state" role="alert"><span class="empty-symbol">↻</span><h3>Не удалось получить расписание</h3><p>Проверь подключение и попробуй ещё раз.</p><button class="primary-button" @click="reload">Повторить</button></div>
           <div v-else-if="!group" class="empty-state"><span class="empty-symbol" aria-hidden="true">▦</span><h3>Какая у тебя группа?</h3><p>{{ catalog.length ? 'Найди её по названию. Мы покажем пары и запомним твой выбор.' : 'Список групп ещё загружается.' }}</p><button v-if="catalog.length" class="primary-button" @click="searchInput?.focus()">Найти группу <span aria-hidden="true">↗</span></button></div>
-          <div v-else-if="loading === 'pending'" class="empty-state" role="status"><span class="empty-symbol">⋯</span><h3>Загружаем занятия</h3></div>
+          <div v-else-if="loading === 'pending' && !schedule" class="empty-state" role="status"><span class="empty-symbol">⋯</span><h3>Загружаем занятия</h3></div>
           <div v-else-if="!dayAvailable" class="empty-state"><span class="empty-symbol">◷</span><h3>Данные за этот день не загружены</h3><p>Выбери день с понедельника по субботу. Воскресенье в источнике не отдаётся.</p></div>
           <div v-else-if="!lessons.length" class="empty-state"><span class="empty-symbol" aria-hidden="true">☀</span><h3>В расписании нет занятий</h3><p>Для этого дня, недели и подгруппы пары не указаны в источнике.</p></div>
-          <ol v-else class="lessons">
+          <ol v-else class="lessons" :class="{ refreshing: loading === 'pending' && !!schedule }">
             <li v-for="lesson in lessons" :key="lesson.id" class="lesson-row"><div class="time-column"><strong>{{ lesson.start_time || '—' }}</strong><span>{{ lesson.end_time || 'Время не указано' }}</span></div>
               <article class="lesson-card" :class="kind(lesson)">
                 <div class="lesson-top"><span class="type-label"><i></i>{{ kindLabel(lesson) }}</span><span v-if="subgroupLabel(lesson)" class="subgroup-tag">{{ subgroupLabel(lesson) }}</span></div>

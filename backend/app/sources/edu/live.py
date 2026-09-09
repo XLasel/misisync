@@ -24,7 +24,8 @@ class EduLiveService:
         self._upstream = {}
         self._groups = []
         self._week_cache = {}
-        self._week_lock = None
+        self._week_locks = {}
+        self._week_meta_lock = None
 
     @property
     def info(self):
@@ -93,17 +94,39 @@ class EduLiveService:
                     return
                 raise
 
+    async def _week_lock_for(self, key):
+        async with self._lock('_week_meta_lock'):
+            lock = self._week_locks.get(key)
+            if lock is None:
+                lock = asyncio.Lock()
+                self._week_locks[key] = lock
+            return lock
+
+    def _purge_week_cache(self, now):
+        expired = [key for key, (expires, _) in self._week_cache.items() if expires <= now]
+        for key in expired:
+            self._week_cache.pop(key, None)
+            self._week_locks.pop(key, None)
+        limit = self.settings.edu_schedule_cache_max_entries
+        while len(self._week_cache) >= limit:
+            oldest = min(self._week_cache, key=lambda item: self._week_cache[item][0])
+            self._week_cache.pop(oldest, None)
+            self._week_locks.pop(oldest, None)
+
     async def _week_lessons(self, edu_group, monday, window: Window):
         key = (edu_group.name, monday.isoformat())
+        now = time.monotonic()
         cached = self._week_cache.get(key)
-        if cached and time.monotonic() < cached[0]:
+        if cached and now < cached[0]:
             return [lesson for lesson in cached[1] if window.start <= lesson.date <= window.end]
-        async with self._lock('_week_lock'):
+        async with await self._week_lock_for(key):
+            now = time.monotonic()
             cached = self._week_cache.get(key)
-            if cached and time.monotonic() < cached[0]:
+            if cached and now < cached[0]:
                 return [lesson for lesson in cached[1] if window.start <= lesson.date <= window.end]
             full = Window(start=monday, end=monday + timedelta(days=5))
             async with self.transport_factory() as transport:
                 lessons = await self.source.fetch_week(transport, edu_group, monday, full)
-            self._week_cache[key] = (time.monotonic() + self.settings.edu_schedule_ttl_seconds, lessons)
+            self._purge_week_cache(now)
+            self._week_cache[key] = (now + self.settings.edu_schedule_ttl_seconds, lessons)
             return [lesson for lesson in lessons if window.start <= lesson.date <= window.end]
