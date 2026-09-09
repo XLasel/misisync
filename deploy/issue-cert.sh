@@ -13,7 +13,7 @@ set +a
 : "${DOMAIN:?DOMAIN required}"
 EMAIL="${CERTBOT_EMAIL:-admin@${DOMAIN}}"
 
-mkdir -p deploy/certbot/www deploy/certbot/conf
+mkdir -p deploy/certbot/www deploy/certbot/conf deploy/nginx/active
 
 echo "Requesting certificate for ${DOMAIN}..."
 docker run --rm \
@@ -23,9 +23,9 @@ docker run --rm \
   -d "${DOMAIN}" --email "${EMAIL}" --agree-tos --no-eff-email --non-interactive
 
 echo "Enabling TLS nginx template..."
-cp deploy/nginx/ssl.conf.tls deploy/nginx/templates/default.conf.template
+cp deploy/nginx/ssl.conf.tls deploy/nginx/active/default.conf.template
 
-docker compose -f compose.yaml -f compose.prod.yaml up -d --force-recreate nginx
+docker compose -f compose.yaml -f compose.prod.yaml up -d --no-deps --force-recreate nginx
 
 echo "HTTPS enabled for https://${DOMAIN}/"
 echo "Renew later with: ./deploy/issue-cert.sh  (certbot renew is safe to re-run)"

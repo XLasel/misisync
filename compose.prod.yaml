@@ -19,7 +19,7 @@ services:
       DOMAIN: ${DOMAIN:?Set DOMAIN in .env for production}
       NGINX_ENVSUBST_FILTER: ^DOMAIN$
     volumes:
-      - ./deploy/nginx/templates:/etc/nginx/templates:ro
+      - ./deploy/nginx/active:/etc/nginx/templates:ro
       - ./deploy/certbot/www:/var/www/certbot:ro
       - ./deploy/certbot/conf:/etc/letsencrypt:ro
     depends_on:
