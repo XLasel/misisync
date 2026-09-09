@@ -1,9 +1,7 @@
 /// <reference types="node" />
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { ScheduleRateLimiter } from '../server/utils/rate-limit.ts'
-import { matchesSchedule } from '../utils/schedule.ts'
-import type { Schedule } from '../types/schedule.ts'
+import { ScheduleRateLimiter } from '../src/shared/server/rate-limit'
 
 test('each visitor has a separate quota, which recovers as requests expire', () => {
   let now = 0
@@ -26,14 +24,4 @@ test('bounded visitor storage cannot reset another visitor quota', () => {
   assert.equal(limiter.retryAfter('alice', 1), 60)
   now = 60_000
   assert.equal(limiter.retryAfter('bob', 1), 0)
-})
-
-test('previous schedule is reusable only for the same group and window', () => {
-  const window = { start: '2026-09-07', end: '2026-09-13' }
-  const schedule: Schedule = { group: { id: 'one', name: 'First', institutes: [], education_level: '', subgroups: [] },
-    revision: null, source: null, coverage: null, window, lessons: [], available_dates: [], warnings: [], fetched_at: null, stale: false }
-  assert.equal(matchesSchedule(schedule, 'one', window), true)
-  assert.equal(matchesSchedule(schedule, 'two', window), false)
-  assert.equal(matchesSchedule(schedule, 'one', { start: '2026-09-14', end: '2026-09-20' }), false)
-  assert.equal(matchesSchedule(null, 'one', window), false)
 })

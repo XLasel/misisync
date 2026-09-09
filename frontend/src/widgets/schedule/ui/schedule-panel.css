@@ -1,0 +1,155 @@
+/* One gutter governs headings, notes, lessons and the data footer at every width. */
+.schedule-panel {
+  --panel-gutter: 28px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  min-width: 0;
+  width: 100%;
+}
+.schedule-heading {
+  padding: 25px var(--panel-gutter) 22px;
+}
+.schedule-heading h2 {
+  font-size: 27px;
+  letter-spacing: -0.8px;
+  font-weight: 600;
+  margin: 8px 0 0;
+  color: var(--heading);
+  overflow-wrap: anywhere;
+}
+.schedule-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0 var(--panel-gutter) 22px;
+}
+.day-tabs {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding: 0 var(--panel-gutter);
+  border-block: 1px solid var(--line);
+  gap: 6px;
+}
+.day-tabs button {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px 1px;
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: #abb8d1;
+  font-size: 14px;
+}
+.day-tabs button.active {
+  border-bottom-color: var(--blue);
+  color: var(--blue);
+  font-weight: 600;
+}
+.day-count {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1c2739;
+  min-width: 19px;
+  height: 19px;
+  border-radius: 4px;
+}
+.active .day-count {
+  background: #293e64;
+}
+.day-heading {
+  padding: 25px var(--panel-gutter) 7px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+.day-heading h3 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 500;
+  color: #dce6fa;
+}
+.day-heading h3 small {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 7px;
+}
+.day-heading > span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.filter-note {
+  margin: 6px var(--panel-gutter) 15px;
+  color: #a5b3cf;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.data-notice {
+  margin: 12px var(--panel-gutter);
+  padding: 12px 14px;
+  border: 1px solid #76633f;
+  border-radius: 8px;
+  background: #292519;
+  color: #f0dcae;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.lessons {
+  list-style: none;
+  margin: 16px 0 26px;
+  padding: 0 var(--panel-gutter);
+}
+.lessons.refreshing {
+  opacity: 0.72;
+}
+.schedule-bottom {
+  padding: 15px var(--panel-gutter);
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  color: #a6b3cc;
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+  line-height: 1.6;
+}
+@media (max-width: 1000px) {
+  .schedule-panel {
+    --panel-gutter: 22px;
+  }
+}
+@media (max-width: 700px) {
+  .schedule-panel {
+    --panel-gutter: 17px;
+  }
+  .schedule-heading {
+    padding-top: 21px;
+    padding-bottom: 17px;
+  }
+  .schedule-heading h2 {
+    font-size: 24px;
+  }
+  .day-tabs {
+    gap: 0;
+  }
+  .day-tabs button {
+    gap: 4px;
+    font-size: 13px;
+  }
+  .day-heading h3 {
+    font-size: 18px;
+  }
+}

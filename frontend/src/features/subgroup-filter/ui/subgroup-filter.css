@@ -1,0 +1,31 @@
+.subgroup-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 3px;
+  background: #0f1621;
+  border: 1px solid #35435b;
+  border-radius: 8px;
+}
+.segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 5px;
+  padding: 7px 10px;
+  min-width: 34px;
+  min-height: 34px;
+  color: #a9b8d2;
+  font-size: 0.875rem;
+}
+.segmented button.active {
+  color: #e5edff;
+  background: var(--raised);
+  box-shadow: 0 1px 3px #0004;
+}

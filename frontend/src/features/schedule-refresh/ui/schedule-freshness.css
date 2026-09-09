@@ -1,0 +1,44 @@
+.schedule-freshness {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 16px var(--panel-gutter);
+  border-top: 1px solid var(--line);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.freshness-details {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.freshness-details summary {
+  line-height: 1.8;
+}
+.freshness-details summary > span {
+  display: block;
+  padding-left: 14px;
+  color: #8797b2;
+  overflow-wrap: anywhere;
+}
+.freshness-details p {
+  max-width: 480px;
+  margin: 10px 0 0;
+  line-height: 1.7;
+}
+.refresh-button {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--muted);
+  background: transparent;
+  padding: 9px 12px;
+  min-height: 40px;
+  font-size: 0.75rem;
+  max-width: 100%;
+}
+.refresh-button:hover:not(:disabled) {
+  background: var(--raised);
+  color: var(--heading);
+}

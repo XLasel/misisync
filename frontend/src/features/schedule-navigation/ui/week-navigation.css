@@ -1,0 +1,25 @@
+.week-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--muted);
+  max-width: 100%;
+}
+.calendar-control button {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--raised);
+  color: var(--heading);
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 23px;
+  flex-shrink: 0;
+}
+.calendar-control > span {
+  font-size: 14px;
+  color: var(--heading);
+  text-align: center;
+  min-width: 0;
+  line-height: 1.6;
+}

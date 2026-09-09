@@ -26,9 +26,9 @@ services:
     build: ./frontend
     restart: unless-stopped
     environment:
-      NUXT_API_BASE: ${NUXT_API_BASE:-http://backend:8000}
-      NUXT_SCHEDULE_RATE_LIMIT_PER_MINUTE: ${NUXT_SCHEDULE_RATE_LIMIT_PER_MINUTE:-60}
-      NUXT_TRUST_PROXY: ${NUXT_TRUST_PROXY:-false}
+      API_BASE: ${API_BASE:-http://backend:8000}
+      SCHEDULE_RATE_LIMIT_PER_MINUTE: ${SCHEDULE_RATE_LIMIT_PER_MINUTE:-60}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
     ports:
       - "${PORT:-3000}:3000"
     depends_on:

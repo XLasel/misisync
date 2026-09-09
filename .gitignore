@@ -6,8 +6,9 @@ __pycache__/
 *.sqlite*
 data/
 node_modules/
-.nuxt/
-.output/
+.next/
+*.tsbuildinfo
+next-env.d.ts
 .DS_Store
 artifacts/
 *.har
