@@ -1,3 +1,4 @@
+import s from './schedule-panel.module.css'
 import type { Group, Schedule } from '../../../entities/schedule/model/types'
 import { scheduleCards } from '../../../entities/schedule/model/selectors'
 import { LessonCard } from '../../../entities/schedule/ui/lesson-card'
@@ -50,7 +51,7 @@ export function SchedulePanel({
     content = (
       <EmptyState symbol="↻" title="Не удалось получить расписание" alert>
         <p>{error}</p>
-        <button className="primary-button" onClick={onRefresh}>
+        <button className={s.button} onClick={onRefresh}>
           Повторить
         </button>
       </EmptyState>
@@ -65,7 +66,7 @@ export function SchedulePanel({
         </p>
         {!catalogPending && (
           <button
-            className="primary-button"
+            className={s.button}
             onClick={() => document.getElementById('group-search')?.focus()}
           >
             Найти группу ↗
@@ -94,7 +95,7 @@ export function SchedulePanel({
     )
   else
     content = (
-      <ol className={`lessons${pending ? ' refreshing' : ''}`}>
+      <ol className={[s.list, pending && s.refreshing].filter(Boolean).join(' ')}>
         {lessons.map((lesson) => (
           <LessonCard key={lesson.id} lesson={lesson} />
         ))}
@@ -102,30 +103,30 @@ export function SchedulePanel({
     )
 
   return (
-    <section className="schedule-panel" aria-label="Расписание занятий" aria-busy={pending}>
-      <div className="schedule-heading">
+    <section className={s.root} aria-label="Расписание занятий" aria-busy={pending}>
+      <div className={s.heading}>
         <div>
-          <span className="overline">РАСПИСАНИЕ ЗАНЯТИЙ</span>
+          <span className={s.label}>РАСПИСАНИЕ ЗАНЯТИЙ</span>
           <h2>{group?.name || 'Твоя учебная неделя'}</h2>
         </div>
       </div>
       {group && (
-        <div className="schedule-controls">
+        <div className={s.controls}>
           <WeekNavigation start={dates[0]!} end={dates[6]!} onChange={onWeek} />
           <SubgroupFilter values={subgroups} selected={selectedSubgroup} onChange={onSubgroup} />
         </div>
       )}
-      <nav className="day-tabs" aria-label="Дни недели">
+      <nav className={s.tabs} aria-label="Дни недели">
         {days.map((day, i) => (
           <button
             key={day}
             aria-label={day}
             aria-pressed={weekday === i}
-            className={weekday === i ? 'active' : ''}
+            className={weekday === i ? s.active : ''}
             onClick={() => onDay(i)}
           >
             <span>{shortDays[i]}</span>
-            <span className="day-count">
+            <span className={s.count}>
               {group && schedule?.available_dates.includes(dates[i]!)
                 ? cards.filter((l) => l.date === dates[i]).length
                 : '—'}
@@ -133,7 +134,7 @@ export function SchedulePanel({
           </button>
         ))}
       </nav>
-      <div className="day-heading">
+      <div className={s.day}>
         <h3>
           {days[weekday]} <small>{dateLabel(dates[weekday]!)}</small>
         </h3>
@@ -142,12 +143,10 @@ export function SchedulePanel({
         </span>
       </div>
       {selectedSubgroup !== 'all' && group && (
-        <p className="filter-note">
-          Подгруппа {selectedSubgroup} и занятия без уточнения подгруппы.
-        </p>
+        <p className={s.note}>Подгруппа {selectedSubgroup} и занятия без уточнения подгруппы.</p>
       )}
       {schedule?.warnings.map((warning) => (
-        <p key={warning} className="data-notice" role="status">
+        <p key={warning} className={s.notice} role="status">
           {warning}
         </p>
       ))}
@@ -160,7 +159,7 @@ export function SchedulePanel({
           onRefresh={onRefresh}
         />
       )}
-      <div className="schedule-bottom">
+      <div className={s.footer}>
         <span>Особые даты и условия — в записи занятия</span>
         <span>МСК · UTC+3</span>
       </div>

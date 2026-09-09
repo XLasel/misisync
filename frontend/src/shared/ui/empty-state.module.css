@@ -1,0 +1,33 @@
+.root {
+  padding: 36px 20px 55px;
+  min-height: 350px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+}
+.symbol {
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  width: 70px;
+  height: 70px;
+  border: 1px solid #3b4d6c;
+  background: #1a2942;
+  color: var(--blue);
+  border-radius: 18px;
+}
+.root h3 {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 18px 0 0;
+  color: var(--heading);
+}
+.root p {
+  max-width: 350px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 12px 0 0;
+}

@@ -1,3 +1,4 @@
+import s from './empty-state.module.css'
 import type { ReactNode } from 'react'
 export function EmptyState({
   symbol,
@@ -11,8 +12,8 @@ export function EmptyState({
   alert?: boolean
 }) {
   return (
-    <div className="empty-state" role={alert ? 'alert' : 'status'}>
-      <span className="empty-symbol" aria-hidden="true">
+    <div className={s.root} role={alert ? 'alert' : 'status'}>
+      <span className={s.symbol} aria-hidden="true">
         {symbol}
       </span>
       <h3>{title}</h3>

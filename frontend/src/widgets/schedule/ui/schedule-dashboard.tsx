@@ -1,4 +1,5 @@
 'use client'
+import s from './schedule-dashboard.module.css'
 import { useCalendar } from '../model/use-calendar'
 import { SchedulePanel } from './schedule-panel'
 import { GroupPicker } from '../../../features/group-selection/ui/group-picker'
@@ -6,29 +7,29 @@ import { GroupPicker } from '../../../features/group-selection/ui/group-picker'
 export function ScheduleDashboard({ today }: { today: string }) {
   const state = useCalendar(today)
   return (
-    <main>
-      <div className="heading">
+    <main className={s.root}>
+      <div className={s.heading}>
         <div>
-          <p className="eyebrow">ТВОЯ УЧЕБНАЯ НЕДЕЛЯ</p>
-          <h1>
+          <p className={s.eyebrow}>ТВОЯ УЧЕБНАЯ НЕДЕЛЯ</p>
+          <h1 className={s.title}>
             Расписание<span>.</span>
           </h1>
         </div>
-        <span className="heading-note">
+        <span className={s.description}>
           Предметы, время, аудитории.
           <br />
           Всё, что нужно перед парой.
         </span>
       </div>
-      <div className="workspace">
-        <aside>
+      <div className={s.workspace}>
+        <aside className={s.sidebar}>
           <GroupPicker
             groups={state.catalog}
             selected={state.group}
             onSelect={state.selectGroup}
             pending={state.catalogPending}
           />
-          <p className="sidebar-note">
+          <p className={s.note}>
             Группа и подгруппа сохраняются
             <br />
             на этом устройстве.
@@ -49,10 +50,10 @@ export function ScheduleDashboard({ today }: { today: string }) {
           onRefresh={state.reload}
         />
       </div>
-      <footer>
+      <footer className={s.footer}>
         <span>
           <strong>misisync</strong>
-          <span className="footer-divider">/</span>Учёба в своём ритме
+          <span className={s.divider}>/</span>Учёба в своём ритме
         </span>
         <span>Неофициальный студенческий сервис</span>
       </footer>

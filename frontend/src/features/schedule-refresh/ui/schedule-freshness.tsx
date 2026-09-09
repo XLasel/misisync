@@ -1,3 +1,4 @@
+import s from './schedule-freshness.module.css'
 import { useId } from 'react'
 export function ScheduleFreshness({
   fetchedAt,
@@ -21,8 +22,8 @@ export function ScheduleFreshness({
       }).format(new Date(fetchedAt))
     : null
   return (
-    <div className="schedule-freshness">
-      <details className="freshness-details">
+    <div className={s.root}>
+      <details className={s.details}>
         <summary>
           Данные расписания{' '}
           <span>
@@ -35,12 +36,7 @@ export function ScheduleFreshness({
           По умолчанию кэш действует 15 минут.
         </p>
       </details>
-      <button
-        className="refresh-button"
-        disabled={pending}
-        aria-describedby={id}
-        onClick={onRefresh}
-      >
+      <button className={s.button} disabled={pending} aria-describedby={id} onClick={onRefresh}>
         <span aria-hidden="true">↻</span> {pending ? 'Загрузка…' : 'Обновить'}
       </button>
     </div>

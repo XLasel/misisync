@@ -1,0 +1,56 @@
+.root {
+  max-width: 1290px;
+  margin: auto;
+  padding: 38px 36px 0;
+}
+.title {
+  font-size: clamp(32px, 3.6vw, 44px);
+  letter-spacing: -1.8px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--heading);
+}
+.title > span {
+  color: var(--blue);
+}
+@media (max-width: 700px) {
+  .root {
+    padding: 27px 15px 0;
+  }
+}
+.content {
+  padding: 36px 20px 55px;
+  min-height: 350px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+}
+.symbol {
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  width: 70px;
+  height: 70px;
+  border: 1px solid #3b4d6c;
+  background: #1a2942;
+  color: var(--blue);
+  border-radius: 18px;
+}
+.title {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 18px 0 0;
+  color: var(--heading);
+}
+.content p {
+  max-width: 350px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 12px 0 0;
+}
+.button {
+  composes: root from '../src/shared/ui/button.module.css';
+}

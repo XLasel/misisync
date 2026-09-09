@@ -1,4 +1,4 @@
-.subgroup-control {
+.root {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -6,7 +6,7 @@
   font-size: 0.875rem;
   color: var(--muted);
 }
-.segmented {
+.list {
   display: flex;
   flex-wrap: wrap;
   padding: 3px;
@@ -14,7 +14,7 @@
   border: 1px solid #35435b;
   border-radius: 8px;
 }
-.segmented button {
+.list button {
   border: 0;
   background: transparent;
   border-radius: 5px;
@@ -24,7 +24,7 @@
   color: #a9b8d2;
   font-size: 0.875rem;
 }
-.segmented button.active {
+.list button.active {
   color: #e5edff;
   background: var(--raised);
   box-shadow: 0 1px 3px #0004;

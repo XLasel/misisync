@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "node --experimental-strip-types server.mjs",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts tests/*.test.tsx",
+    "test": "node --import ./tests/register-css.mjs --import tsx --test tests/*.test.ts tests/*.test.tsx",
     "lint": "eslint .",
     "format": "prettier --write app src tests server.mjs next.config.mjs"
   },

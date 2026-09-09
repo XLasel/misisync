@@ -1,11 +1,12 @@
 'use client'
+import s from './error-page.module.css'
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (
-    <main>
-      <div className="empty-state" role="alert">
-        <h1>Не удалось открыть расписание</h1>
+    <main className={s.root}>
+      <div className={s.content} role="alert">
+        <h1 className={s.title}>Не удалось открыть расписание</h1>
         <p>Попробуй загрузить страницу ещё раз.</p>
-        <button className="primary-button" onClick={reset}>
+        <button className={s.button} onClick={reset}>
           Повторить
         </button>
       </div>

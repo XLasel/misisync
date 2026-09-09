@@ -1,3 +1,4 @@
+import s from './week-navigation.module.css'
 import { addDays, dateLabel } from '../../../shared/lib/calendar'
 export function WeekNavigation({
   start,
@@ -9,14 +10,22 @@ export function WeekNavigation({
   onChange: (start: string) => void
 }) {
   return (
-    <div className="week-control calendar-control">
-      <button aria-label="Предыдущая неделя" onClick={() => onChange(addDays(start, -7))}>
+    <div className={s.root}>
+      <button
+        className={s.button}
+        aria-label="Предыдущая неделя"
+        onClick={() => onChange(addDays(start, -7))}
+      >
         ‹
       </button>
-      <span aria-live="polite">
+      <span className={s.label} aria-live="polite">
         {dateLabel(start)} — {dateLabel(end)}
       </span>
-      <button aria-label="Следующая неделя" onClick={() => onChange(addDays(start, 7))}>
+      <button
+        className={s.button}
+        aria-label="Следующая неделя"
+        onClick={() => onChange(addDays(start, 7))}
+      >
         ›
       </button>
     </div>

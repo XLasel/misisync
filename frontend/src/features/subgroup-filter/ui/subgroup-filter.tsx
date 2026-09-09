@@ -1,3 +1,4 @@
+import s from './subgroup-filter.module.css'
 export function SubgroupFilter({
   values,
   selected,
@@ -9,12 +10,12 @@ export function SubgroupFilter({
 }) {
   if (!values.length) return null
   return (
-    <div className="subgroup-control" role="group" aria-label="Фильтр по подгруппе">
+    <div className={s.root} role="group" aria-label="Фильтр по подгруппе">
       <span>Подгруппа</span>
-      <div className="segmented">
+      <div className={s.list}>
         <button
           aria-pressed={selected === 'all'}
-          className={selected === 'all' ? 'active' : ''}
+          className={selected === 'all' ? s.active : ''}
           onClick={() => onChange('all')}
         >
           Все
@@ -24,7 +25,7 @@ export function SubgroupFilter({
             key={id}
             aria-label={`Подгруппа ${id}`}
             aria-pressed={selected === String(id)}
-            className={selected === String(id) ? 'active' : ''}
+            className={selected === String(id) ? s.active : ''}
             onClick={() => onChange(String(id))}
           >
             {id}

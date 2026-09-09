@@ -1,4 +1,5 @@
 'use client'
+import s from './group-picker.module.css'
 import { useId, useRef, useState } from 'react'
 import type { Group } from '../../../entities/schedule/model/types'
 import { normalizeGroupSearch } from '../../../shared/lib/search'
@@ -40,26 +41,27 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
     document.getElementById(`${id}-option-${next}`)?.scrollIntoView({ block: 'nearest' })
   }
   return (
-    <section className="group-panel">
-      <div className="panel-label">
-        <span className="section-number">01</span>
+    <section className={s.root}>
+      <div className={s.heading}>
+        <span className={s.number}>01</span>
         <h2>Твоя группа</h2>
       </div>
       <div
-        className="group-picker"
+        className={s.picker}
         onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
         }}
       >
-        <label htmlFor="group-search" className="sr-only">
+        <label htmlFor="group-search" className={s.visuallyHidden}>
           Найти учебную группу
         </label>
-        <div className="search-field">
+        <div className={s.field}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="10.5" cy="10.5" r="6.5" />
             <path d="m16 16 4 4" />
           </svg>
           <input
+            className={s.input}
             id="group-search"
             ref={input}
             value={query}
@@ -95,20 +97,15 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
           />
         </div>
         {open && (
-          <div className="picker-popover">
-            <div className="results-caption" role="status">
+          <div className={s.popover}>
+            <div className={s.caption} role="status">
               {pending
                 ? 'Загружаем группы…'
                 : matches.length
                   ? `Найдено групп: ${matches.length}`
                   : 'Ничего не найдено'}
             </div>
-            <ul
-              id={`${id}-results`}
-              role="listbox"
-              aria-label="Учебные группы"
-              className="group-results"
-            >
+            <ul id={`${id}-results`} role="listbox" aria-label="Учебные группы" className={s.list}>
               {options.map((item, i) => (
                 <li
                   id={`${id}-option-${i}`}
@@ -116,7 +113,7 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
                   role="option"
                   aria-label={`${item.name} ${item.education_level || 'Уровень не указан'}`}
                   aria-selected={item.id === selected?.id}
-                  className={i === active ? 'highlighted' : ''}
+                  className={i === active ? s.highlighted : ''}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => choose(item)}
                 >
@@ -126,27 +123,28 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
               ))}
             </ul>
             {!pending && !matches.length && (
-              <p className="search-help">Попробуй часть названия или сбрось уточнения.</p>
+              <p className={s.help}>Попробуй часть названия или сбрось уточнения.</p>
             )}
             {matches.length > options.length && (
-              <p className="search-help">Показаны первые 60. Введи название группы.</p>
+              <p className={s.help}>Показаны первые 60. Введи название группы.</p>
             )}
           </div>
         )}
       </div>
       {(institutes.length > 0 || levels.length > 0) && (
-        <details className="search-refinements">
+        <details className={s.refinements}>
           <summary>
             Уточнить поиск{' '}
             {(institute || level) && (
-              <span className="filter-count">{Number(!!institute) + Number(!!level)}</span>
+              <span className={s.count}>{Number(!!institute) + Number(!!level)}</span>
             )}
           </summary>
-          <div className="refinements-content">
+          <div className={s.filters}>
             {institutes.length > 0 && (
               <>
                 <label htmlFor={`${id}-institute`}>Институт</label>
                 <select
+                  className={s.select}
                   id={`${id}-institute`}
                   value={institute}
                   onChange={(e) => {
@@ -165,6 +163,7 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
               <>
                 <label htmlFor={`${id}-level`}>Уровень образования</label>
                 <select
+                  className={s.select}
                   id={`${id}-level`}
                   value={level}
                   onChange={(e) => {
@@ -181,7 +180,7 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
             )}
             {(institute || level) && (
               <button
-                className="text-button"
+                className={s.reset}
                 onClick={() => {
                   setInstitute('')
                   setLevel('')
@@ -196,8 +195,8 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
         </details>
       )}
       {selected ? (
-        <div className="selected-group">
-          <span className="overline">ВЫБРАННАЯ ГРУППА</span>
+        <div className={s.selected}>
+          <span className={s.label}>ВЫБРАННАЯ ГРУППА</span>
           <strong>{selected.name}</strong>
           <span>{selected.education_level}</span>
           {selected.institutes.map((name) => (
@@ -205,7 +204,7 @@ export function GroupPicker({ groups, selected, onSelect, pending }: Props) {
           ))}
         </div>
       ) : (
-        <p className="hint">Начни вводить название. Институт и уровень можно не выбирать.</p>
+        <p className={s.hint}>Начни вводить название. Институт и уровень можно не выбирать.</p>
       )}
     </section>
   )

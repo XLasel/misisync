@@ -1,37 +1,37 @@
-.group-panel {
+.root {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 23px;
 }
-.panel-label {
+.heading {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 22px;
 }
-.panel-label h2 {
+.heading h2 {
   font-size: 17px;
   margin: 0;
   font-weight: 600;
   color: var(--heading);
 }
-.section-number {
+.number {
   color: #a4b2ce;
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
-.group-picker {
+.picker {
   position: relative;
 }
-.search-field {
+.field {
   display: flex;
   align-items: center;
 }
-.search-field input {
+.field input {
   padding-left: 36px;
 }
-.search-field svg {
+.field svg {
   position: absolute;
   left: 11px;
   width: 17px;
@@ -41,7 +41,7 @@
   stroke-width: 1.7;
   pointer-events: none;
 }
-.picker-popover {
+.popover {
   position: absolute;
   top: calc(100% + 7px);
   inset-inline: 0;
@@ -52,20 +52,20 @@
   box-shadow: 0 12px 30px #0006;
   overflow: hidden;
 }
-.results-caption {
+.caption {
   padding: 12px;
   font-size: 12px;
   color: var(--muted);
   border-bottom: 1px solid var(--line);
 }
-.group-results {
+.list {
   list-style: none;
   padding: 4px;
   margin: 0;
   max-height: 270px;
   overflow-y: auto;
 }
-.group-results li {
+.list li {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -74,47 +74,47 @@
   cursor: pointer;
   overflow-wrap: anywhere;
 }
-.group-results strong {
+.list strong {
   font-size: 14px;
   font-weight: 500;
 }
-.group-results li > span {
+.list li > span {
   font-size: 12px;
   color: var(--muted);
 }
-.group-results li.highlighted,
-.group-results li:hover {
+.list li.highlighted,
+.list li:hover {
   background: #223456;
   color: var(--blue);
 }
-.group-results li[aria-selected='true'] strong::after {
+.list li[aria-selected='true'] strong::after {
   content: ' ✓';
 }
-.search-help {
+.help {
   padding: 0 12px 10px;
   font-size: 12px;
   line-height: 1.6;
   color: var(--muted);
 }
-.search-refinements {
+.refinements {
   margin-top: 16px;
   font-size: 0.875rem;
 }
-.search-refinements > summary {
+.refinements > summary {
   color: #aebedf;
   padding: 5px 0;
 }
-.refinements-content {
+.filters {
   padding-top: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.refinements-content label {
+.filters label {
   font-size: 0.875rem;
   margin-top: 3px;
 }
-.filter-count {
+.count {
   display: inline-block;
   font-size: 11px;
   background: #243453;
@@ -123,14 +123,14 @@
   padding: 2px 5px;
   margin-left: 4px;
 }
-.selected-group {
+.selected {
   margin-top: 23px;
   padding-top: 20px;
   border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
 }
-.selected-group > strong {
+.selected > strong {
   font-size: 21px;
   color: var(--heading);
   font-weight: 600;
@@ -138,11 +138,11 @@
   margin: 9px 0 6px;
   overflow-wrap: anywhere;
 }
-.selected-group > span:not(.overline) {
+.selected > span:not(.label) {
   font-size: 13px;
   color: #aab9d5;
 }
-.selected-group p,
+.selected p,
 .hint {
   font-size: 13px;
   line-height: 1.7;
@@ -152,25 +152,79 @@
   margin: 20px 0 0;
 }
 @media (max-width: 1000px) {
-  .group-panel {
+  .root {
     padding: 19px;
   }
 }
 @media (max-width: 700px) {
-  .group-panel {
+  .root {
     padding: 18px;
   }
-  .panel-label {
+  .heading {
     margin-bottom: 15px;
   }
-  .selected-group {
+  .selected {
     margin-top: 15px;
     padding-top: 14px;
   }
-  .selected-group > .overline {
+  .selected > .label {
     display: none;
   }
-  .search-refinements {
+  .refinements {
     margin-top: 11px;
+  }
+}
+.input,
+.select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #39465c;
+  color: #e1e8f6;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 14px;
+  min-height: 44px;
+  caret-color: #a4c0ff;
+}
+.input::placeholder {
+  color: #a1adc3;
+}
+.select option {
+  background: var(--surface);
+  color: #e3e9f4;
+}
+.input:-webkit-autofill {
+  -webkit-text-fill-color: #e3e9f4;
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+}
+.label {
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  color: #a2b1cd;
+  font-weight: 500;
+}
+.reset {
+  background: none;
+  border: 0;
+  color: var(--blue);
+  text-align: left;
+  font-size: 13px;
+  padding: 8px 0;
+}
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 700px) {
+  .input {
+    font-size: 1rem;
   }
 }

@@ -1,4 +1,4 @@
-.topbar {
+.root {
   height: 80px;
   display: flex;
   align-items: center;
@@ -16,7 +16,7 @@
   letter-spacing: -1.4px;
   color: var(--heading);
 }
-.brand-light {
+.brandLight {
   font-weight: 500;
 }
 .brand sup {
@@ -25,25 +25,25 @@
   margin-left: 6px;
   color: #a2aec6;
 }
-.header-context {
+.context {
   color: var(--muted);
   font-size: 14px;
   border-left: 1px solid var(--line);
   padding-left: 27px;
 }
-.source-link {
+.source {
   display: inline-flex;
   align-items: center;
   margin-left: auto;
   color: var(--heading);
   font-size: 14px;
 }
-.source-link span {
+.source span {
   margin-left: 10px;
   font-size: 20px;
 }
 @media (max-width: 700px) {
-  .topbar {
+  .root {
     height: 68px;
     padding: 0 19px;
     gap: 12px;
@@ -55,10 +55,10 @@
     width: 33px;
     height: 33px;
   }
-  .header-context {
+  .context {
     display: none;
   }
-  .source-link {
+  .source {
     font-size: 13px;
   }
 }

@@ -1,4 +1,4 @@
-.week-control {
+.root {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -6,7 +6,7 @@
   color: var(--muted);
   max-width: 100%;
 }
-.calendar-control button {
+.button {
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--raised);
@@ -16,7 +16,7 @@
   font-size: 23px;
   flex-shrink: 0;
 }
-.calendar-control > span {
+.label {
   font-size: 14px;
   color: var(--heading);
   text-align: center;
