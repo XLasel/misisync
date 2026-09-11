@@ -24,6 +24,8 @@ def sandbox(tmp_path):
         'sha256sum': 'cat >/dev/null; echo "123456789abc  -"',
         'docker': '''printf '%s\\n' "$*" >> "$TEST_ROOT/docker.calls"
 case "$*" in
+  *" pull") exit "${PULL_EXIT:-0}" ;;
+  *" up "*) exit "${UP_EXIT:-0}" ;;
   *" renew "*)
     if [ "${RENEWED:-0}" = 1 ]; then touch "$TEST_ROOT/deploy/certbot/www/.reload-required"; fi
     exit "${CERTBOT_EXIT:-0}" ;;
@@ -103,3 +105,36 @@ def test_stopped_cron_is_not_reported_as_working_automation(sandbox):
     result = run(sandbox, 'install-renewal.sh', CRON_ACTIVE_EXIT='1')
     assert result.returncode != 0
     assert 'Enable cron' in result.stderr
+
+
+def test_release_download_failure_does_not_change_running_services(sandbox):
+    root, _ = sandbox
+    old = 'a' * 40
+    (root / 'deploy/release.env').write_text(f'RELEASE_TAG={old}\n')
+    result = run(sandbox, 'update.sh', 'b' * 40, PULL_EXIT='1')
+    assert result.returncode != 0
+    assert ' up ' not in (root / 'docker.calls').read_text()
+    assert (root / 'deploy/release.env').read_text() == f'RELEASE_TAG={old}\n'
+
+
+def test_successful_release_retains_previous_and_never_builds(sandbox):
+    root, _ = sandbox
+    old, new = 'a' * 40, 'b' * 40
+    (root / 'deploy/release.env').write_text(f'RELEASE_TAG={old}\n')
+    result = run(sandbox, 'update.sh', new)
+    assert result.returncode == 0, result.stderr
+    assert (root / 'deploy/release.env').read_text() == f'RELEASE_TAG={new}\n'
+    assert (root / 'deploy/previous-release.env').read_text() == f'RELEASE_TAG={old}\n'
+    calls = (root / 'docker.calls').read_text()
+    assert '--build' not in calls
+    assert '--no-build' in calls
+    assert run(sandbox, 'update.sh').returncode == 0
+    assert (root / 'deploy/previous-release.env').read_text() == f'RELEASE_TAG={old}\n'
+
+
+def test_failed_healthcheck_does_not_mark_release_successful(sandbox):
+    root, _ = sandbox
+    old = 'a' * 40
+    (root / 'deploy/release.env').write_text(f'RELEASE_TAG={old}\n')
+    assert run(sandbox, 'update.sh', 'b' * 40, UP_EXIT='1').returncode != 0
+    assert (root / 'deploy/release.env').read_text() == f'RELEASE_TAG={old}\n'

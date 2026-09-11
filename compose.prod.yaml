@@ -4,12 +4,25 @@
 # Requires DOMAIN in .env (e.g. schedule.example.ru). Point the DNS A-record to this server.
 
 services:
+  backend:
+    image: ghcr.io/xlasel/misisync-backend:${RELEASE_TAG:-latest}
+    build: !reset null
+    logging: &bounded-logs
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   frontend:
+    image: ghcr.io/xlasel/misisync-frontend:${RELEASE_TAG:-latest}
+    build: !reset null
+    logging: *bounded-logs
     ports: !reset []
     environment:
       TRUST_PROXY: ${TRUST_PROXY:-true}
 
   nginx:
+    logging: *bounded-logs
     image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
     restart: unless-stopped
     ports:
