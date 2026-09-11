@@ -24,7 +24,7 @@
   gap: 16px;
   align-items: center;
   flex-wrap: wrap;
-  padding: 0 var(--panel-gutter) 22px;
+  padding: 0 var(--panel-gutter) 8px;
 }
 .tabs {
   display: grid;
@@ -152,4 +152,8 @@
   .day h3 {
     font-size: 18px;
   }
+}
+
+.weekNote {
+  padding: 0 var(--panel-gutter) 18px;
 }

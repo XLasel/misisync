@@ -1,6 +1,7 @@
 import { scheduleCards } from '@/entities/schedule/model/selectors'
 import type { Group, Schedule } from '@/entities/schedule/model/types'
 import { LessonCard } from '@/entities/schedule/ui/lesson-card'
+import { WeekEstimate } from '@/features/schedule-navigation/ui/week-estimate'
 import { WeekNavigation } from '@/features/schedule-navigation/ui/week-navigation'
 import { ScheduleFreshness } from '@/features/schedule-refresh/ui/schedule-freshness'
 import { SubgroupFilter } from '@/features/subgroup-filter/ui/subgroup-filter'
@@ -111,6 +112,11 @@ export function SchedulePanel({
         <div className={s.controls}>
           <WeekNavigation start={dates[0]!} end={dates[6]!} onChange={onWeek} />
           <SubgroupFilter values={subgroups} selected={selectedSubgroup} onChange={onSubgroup} />
+        </div>
+      )}
+      {group && (
+        <div className={s.weekNote}>
+          <WeekEstimate date={dates[0]!} />
         </div>
       )}
       <nav className={s.tabs} aria-label="Дни недели">

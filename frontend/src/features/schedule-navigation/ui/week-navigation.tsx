@@ -13,23 +13,25 @@ export function WeekNavigation({
 }) {
   return (
     <div className={s.root}>
-      <button
-        className={s.button}
-        aria-label="Предыдущая неделя"
-        onClick={() => onChange(addDays(start, -7))}
-      >
-        ‹
-      </button>
-      <span className={s.label} aria-live="polite">
-        {dateLabel(start)} — {dateLabel(end)}
-      </span>
-      <button
-        className={s.button}
-        aria-label="Следующая неделя"
-        onClick={() => onChange(addDays(start, 7))}
-      >
-        ›
-      </button>
+      <div className={s.navigation}>
+        <button
+          className={s.button}
+          aria-label="Предыдущая неделя"
+          onClick={() => onChange(addDays(start, -7))}
+        >
+          ‹
+        </button>
+        <span className={s.label} aria-live="polite">
+          {dateLabel(start)} — {dateLabel(end)}
+        </span>
+        <button
+          className={s.button}
+          aria-label="Следующая неделя"
+          onClick={() => onChange(addDays(start, 7))}
+        >
+          ›
+        </button>
+      </div>
     </div>
   )
 }
