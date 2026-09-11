@@ -53,9 +53,37 @@ jobs:
       - run: npm run lint
       - run: npm run build
 
-  deploy:
+  images:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Build and publish images
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPOSITORY="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          for service in backend frontend; do
+            docker build --platform linux/amd64 \
+              --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+              --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+              -t "$REPOSITORY-$service:$GITHUB_SHA" "$service"
+            docker push "$REPOSITORY-$service:$GITHUB_SHA"
+          done
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [images]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     concurrency:
@@ -104,5 +132,5 @@ jobs:
           fi
           git reset --hard "$TARGET_SHA"
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
-          bash deploy/update.sh
+          bash deploy/update.sh "$TARGET_SHA"
           REMOTE

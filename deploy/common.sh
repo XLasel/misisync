@@ -22,6 +22,12 @@ if [[ ! "$DOMAIN" =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ || "$DOMAIN" == *
   echo 'DOMAIN must be a DNS hostname, without scheme, path or port.' >&2
   exit 1
 fi
+if [[ -f deploy/release.env ]]; then
+  # Locally generated deployment state, retained across git updates.
+  # shellcheck disable=SC1091
+  source deploy/release.env
+  export RELEASE_TAG
+fi
 mkdir -p deploy/certbot/www deploy/certbot/conf deploy/nginx/active
 # Shared with the calling scripts.
 # shellcheck disable=SC2034
