@@ -1,0 +1,27 @@
+server {
+    listen 127.0.0.1:8080;
+    location = /healthz { return 200 'ok'; }
+    location / { return 404; }
+}
+limit_req_zone $ssl_client_serial zone=integration:1m rate=30r/m;
+server {
+    listen 8443 ssl;
+    server_name ${DOMAIN};
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_client_certificate /etc/nginx/client-pki/ca.crt;
+    ssl_verify_client on;
+    ssl_verify_depth 1;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    limit_req_status 429;
+    location = /api/v1/schedule {
+        limit_except GET { deny all; }
+        limit_req zone=integration burst=5 nodelay;
+        proxy_set_header X-Integration-Key "${INTEGRATION_PROXY_SECRET}";
+        proxy_set_header Host ${DOMAIN};
+        proxy_pass http://backend:8000;
+        proxy_read_timeout 185s;
+        add_header Cache-Control "no-store" always;
+    }
+    location / { return 404; }
+}

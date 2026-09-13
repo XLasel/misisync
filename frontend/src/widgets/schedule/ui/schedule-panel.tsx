@@ -39,6 +39,7 @@ export function SchedulePanel({
   onSubgroup,
   onRefresh,
 }: Props) {
+  const academicWeek = schedule?.academic_weeks?.find((week) => week.start === dates[0])
   const subgroups = [
     ...new Set([
       ...(group?.subgroups || []),
@@ -114,9 +115,9 @@ export function SchedulePanel({
           <SubgroupFilter values={subgroups} selected={selectedSubgroup} onChange={onSubgroup} />
         </div>
       )}
-      {group && (
+      {group && academicWeek && (
         <div className={s.weekNote}>
-          <WeekEstimate date={dates[0]!} />
+          <WeekEstimate week={academicWeek} />
         </div>
       )}
       <nav className={s.tabs} aria-label="Дни недели">

@@ -1,0 +1,25 @@
+# Optional gateway; backend remains private. Does not affect browser HTTPS on 443.
+services:
+  integration:
+    image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+    restart: unless-stopped
+    ports: ["8443:8443"]
+    environment:
+      DOMAIN: ${DOMAIN:?required}
+      INTEGRATION_PROXY_SECRET: ${INTEGRATION_PROXY_SECRET:?required}
+      NGINX_ENVSUBST_FILTER: ^(DOMAIN|INTEGRATION_PROXY_SECRET)$
+    volumes:
+      - ./deploy/nginx/integration.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+      - ./deploy/integration-pki:/etc/nginx/client-pki:ro
+    logging:
+      driver: local
+      options: {max-size: "10m", max-file: "3"}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      backend:
+        condition: service_healthy

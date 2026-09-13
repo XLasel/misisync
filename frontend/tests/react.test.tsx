@@ -38,6 +38,7 @@ function schedule(id: string, start = '2026-09-07', end = '2026-09-13'): Schedul
     lessons: [],
     warnings: [],
     stale: false,
+    academic_weeks: [],
     fetched_at: '2026-09-09T06:00:00Z',
   }
 }

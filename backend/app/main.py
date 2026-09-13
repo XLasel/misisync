@@ -7,6 +7,8 @@ from fastapi import FastAPI, HTTPException, Query
 
 from .composition import build_provider, build_transport_factory
 from .config import Settings
+from .academic import weeks
+from .integration import router as integration_router
 from .ports import SourceBusy
 from .domain import Catalog, Schedule, Status, Window
 
@@ -35,6 +37,8 @@ def create_app(settings=None, *, provider=None, transport_factory=None):
 
     app = FastAPI(title='Misisync API', version='2.0.0', lifespan=lifespan)
     app.state.provider = provider
+    app.state.settings = config
+    app.include_router(integration_router)
 
     @app.get('/api/health')
     async def health():
@@ -60,7 +64,8 @@ def create_app(settings=None, *, provider=None, transport_factory=None):
         if end < start or (end - start).days > 90:
             raise HTTPException(422, 'Requested date range must be ordered and at most 91 days')
         try:
-            return await provider.schedule(group_id, Window(start=start, end=end))
+            result = await provider.schedule(group_id, Window(start=start, end=end))
+            return result.model_copy(update={'academic_weeks': weeks(result.window, config)})
         except SourceBusy:
             raise HTTPException(503, 'Источник занят. Попробуй через несколько секунд.', headers={'Retry-After': '5'}) from None
         except Exception:

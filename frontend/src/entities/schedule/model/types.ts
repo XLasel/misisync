@@ -32,7 +32,18 @@ export type Lesson = {
   evidence: Evidence[]
 }
 export type Catalog = { revision: string | null; groups: Group[] }
+export type AcademicWeek = {
+  start: string
+  end: string
+  kind: 'upper' | 'lower'
+  estimated: boolean
+  reference_date: string
+  reference_kind: 'upper' | 'lower'
+  explanation: string
+}
 export type Schedule = {
+  academic_weeks: AcademicWeek[]
+
   revision: string | null
   group: Group | null
   source: SourceInfo | null

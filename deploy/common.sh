@@ -32,6 +32,13 @@ mkdir -p deploy/certbot/www deploy/certbot/conf deploy/nginx/active
 # Shared with the calling scripts.
 # shellcheck disable=SC2034
 COMPOSE=(docker compose -f compose.yaml -f compose.prod.yaml)
+if [[ "${INTEGRATION_ENABLED:-false}" == true ]]; then
+  if [[ ! "${INTEGRATION_PROXY_SECRET:-}" =~ ^[0-9a-f]{64}$ ]]; then
+    echo 'Set INTEGRATION_PROXY_SECRET to 64 lowercase hexadecimal characters.' >&2
+    exit 1
+  fi
+  COMPOSE+=(-f compose.integration.yaml)
+fi
 # The same image is used for issue and renew; set to an official immutable image below.
 # shellcheck disable=SC2034
 CERTBOT_IMAGE='certbot/certbot@sha256:f70ad0adbb7e117f0fe42a63c553f28ea451edabc0148757b6efcd9735acaa20'
