@@ -1,9 +1,13 @@
 import os
+from datetime import date
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class Settings:
+    academic_reference_date: date = date(2026, 9, 7)
+    academic_reference_kind: str = 'lower'
+    integration_proxy_secret: str = ''
     request_timeout_seconds: int = 60
     max_download_bytes: int = 30 * 1024 * 1024
     edu_api_url: str = 'https://edu.misis.ru/schedule'
@@ -19,6 +23,10 @@ class Settings:
     edu_max_concurrent_requests: int = 4
 
     def __post_init__(self):
+        if self.integration_proxy_secret and (len(self.integration_proxy_secret) != 64 or any(c not in '0123456789abcdef' for c in self.integration_proxy_secret)):
+            raise ValueError('INTEGRATION_PROXY_SECRET must contain 64 lowercase hexadecimal characters')
+        if self.academic_reference_kind not in ('upper', 'lower'):
+            raise ValueError('Invalid academic reference kind')
         if self.request_timeout_seconds < 1 or self.max_download_bytes < 1024:
             raise ValueError('Invalid timeout or download limit')
         if self.edu_request_delay_seconds < 0 or self.edu_catalog_ttl_seconds < 0 or self.edu_schedule_ttl_seconds < 0:
@@ -35,6 +43,7 @@ class Settings:
     @classmethod
     def from_env(cls):
         converters = {
+            'academic_reference_date': date.fromisoformat,
             'request_timeout_seconds': int,
             'max_download_bytes': int,
             'edu_request_delay_seconds': float,

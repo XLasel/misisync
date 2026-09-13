@@ -46,4 +46,7 @@ for service in backend frontend; do
     fi
   done < <(docker image ls "$repository" --format '{{.Tag}}')
 done
+if [[ "${INTEGRATION_ENABLED:-false}" == true ]]; then
+  "${COMPOSE[@]}" up -d --no-deps --force-recreate --wait --wait-timeout 60 integration
+fi
 echo "OK — ${PUBLIC_URL}"

@@ -30,7 +30,11 @@ jobs:
           for script in deploy/*.sh; do bash -n "$script"; done
           shellcheck deploy/*.sh
       - name: Validate nginx and production Compose
-        run: python scripts/check_nginx.py
+        run: |
+          python scripts/check_nginx.py
+          python scripts/check_integration.py
+          python scripts/export_openapi.py
+          git diff --exit-code -- docs/api/openapi.json
 
   frontend:
     runs-on: ubuntu-latest

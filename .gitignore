@@ -19,3 +19,4 @@ artifacts/
 /deploy/release.env
 /deploy/release.env.tmp
 /deploy/previous-release.env
+/deploy/integration-pki/

@@ -20,6 +20,10 @@ docker run --rm \
 if [[ -e "$STAMP" && "${1:-}" != --dry-run ]]; then
   "${COMPOSE[@]}" exec -T nginx nginx -t
   "${COMPOSE[@]}" exec -T nginx nginx -s reload
+  if [[ "${INTEGRATION_ENABLED:-false}" == true ]]; then
+    "${COMPOSE[@]}" exec -T integration nginx -t
+    "${COMPOSE[@]}" exec -T integration nginx -s reload
+  fi
   rm -f "$STAMP"
 fi
 exit "$result"

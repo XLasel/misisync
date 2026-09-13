@@ -148,7 +148,18 @@ class Catalog(Model):
     groups: list[Group]
 
 
+class AcademicWeek(Model):
+    start: date
+    end: date
+    kind: Literal['upper', 'lower']
+    estimated: bool = True
+    reference_date: date
+    reference_kind: Literal['upper', 'lower']
+    explanation: str
+
+
 class Schedule(Model):
+    academic_weeks: list[AcademicWeek] = Field(default_factory=list)
     fetched_at: Optional[str] = None
     stale: bool = False
     revision: Optional[str]
