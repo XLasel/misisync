@@ -55,12 +55,14 @@ class EduMapper:
                 for lesson in cell.lessons:
                     if lesson.subject_id is None and not lesson.subject_name:
                         continue  # Explicit empty placeholder, not an unknown subject.
-                    if not lesson.subject_name:
-                        raise ValueError('Missing lesson subject')
                     memberships = [g for g in lesson.ed_groups if g.group_id == group.id]
                     if not memberships:
                         raise ValueError('Lesson does not belong to requested group')
                     warnings = []
+                    # Upstream sometimes omits titles while keeping subject_id (official UI still shows the slot).
+                    subject = (lesson.subject_name or '').strip() or 'Без названия'
+                    if subject == 'Без названия':
+                        warnings.append('В источнике не указано название предмета.')
                     time = interval(lesson.lesson_start, lesson.lesson_end) or interval(cell.bell_start, cell.bell_end)
                     if time is None:
                         if len(bells[cell.key]) == 1:
@@ -77,7 +79,8 @@ class EduMapper:
                     if len(slots) > 1 and any(
                         other.lesson_index != lesson.lesson_index and (
                             (lesson.subject_id and other.subject_id == lesson.subject_id) or
-                            other.subject_name == lesson.subject_name)
+                            ((other.subject_name or '').strip() and
+                             (other.subject_name or '').strip() == (lesson.subject_name or '').strip()))
                         for key in slots for other in cell_lessons[row.lesson_date, key]):
                         warnings.append('Источник повторяет эту запись в нескольких парах. Уточни время в официальном расписании.')
                     # An explicit public projection: new upstream fields must never leak to clients.
@@ -94,7 +97,7 @@ class EduMapper:
                         id=identity('edu_api', group.name, row.lesson_date.isoformat(), cell.key, lesson.lesson_index, raw),
                         group_id=group.name, date=row.lesson_date,
                         start_time=time[0] if time else None, end_time=time[1] if time else None,
-                        subject=lesson.subject_name, lesson_type=lesson.lesson_type,
+                        subject=subject, lesson_type=lesson.lesson_type,
                         teachers=list(dict.fromkeys(t.teacher_name for t in lesson.teachers if t.teacher_name)),
                         rooms=list(dict.fromkeys(r.room_name for r in lesson.rooms if r.room_name)),
                         subgroup_ids=sorted({g.subgroup_number for g in memberships if g.subgroup_number is not None}),

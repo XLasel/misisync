@@ -104,6 +104,15 @@ def test_edu_mapper_allows_double_period_same_id_without_warning():
     assert all('повторяет' not in w for item in records for w in item.warnings)
 
 
+def test_edu_mapper_keeps_lessons_without_subject_title():
+    source = EduApiSource(Settings(edu_request_delay_seconds=0))
+    raw = calendar(entries=[{**lesson(), 'subject_name': None}, {**lesson('empty'), 'subject_id': None, 'subject_name': None}])
+    records = source.mapper.normalize(CalendarResult.model_validate(raw), EduGroup(id='42', name=GROUP, subgroups=[]), WINDOW.start, WINDOW)
+    assert len(records) == 1
+    assert records[0].subject == 'Без названия'
+    assert any('не указано название' in w for w in records[0].warnings)
+
+
 def test_conflicting_bells_are_not_guessed():
     source = EduApiSource(Settings(edu_filial='OTHER'))
     raw = calendar()
